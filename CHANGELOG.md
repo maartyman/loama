@@ -28,3 +28,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add button to remove access from resource for subject
 - Change components so everything uses typescript
 - Add pinia store for external state management in loama
+- Add default image for logged in user
