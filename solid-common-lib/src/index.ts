@@ -1,4 +1,4 @@
-import { getPodUrlAll, getSolidDataset, getStringNoLocale, getStringWithLocale, getThing, getUrl } from "@inrupt/solid-client";
+import { getPodUrlAll, getSolidDataset, getStringNoLocale, getStringWithLocale, getThing, getThingAll, getUrl } from "@inrupt/solid-client";
 import { Session } from "@inrupt/solid-client-authn-browser";
 import { url } from "./types";
 import { FOAF } from "@inrupt/vocab-common-rdf";
@@ -11,16 +11,47 @@ export { url } from "./types";
  * @returns The URL's to the pods the user has access to
  */
 export async function listPodUrls(session: Session): Promise<url[]> {
-    const urls = await getPodUrlAll(session.info.webId!, {
-        fetch: session.fetch,
+    return listWebIdPodUrls(session.info.webId!, session.fetch);
+}
+
+export async function listWebIdPodUrls(webId: string, fetch?: typeof globalThis.fetch): Promise<url[]> {
+    const urls = await getPodUrlAll(webId, {
+        fetch,
     });
+
+    const fetchedUrl = await fetchStorageTriple(webId);
+    if (fetchedUrl) {
+        urls.push(fetchedUrl)
+    }
+
     if (urls.length === 0) {
-        // TODO this is a guess and should be much more resilient
-        urls.push((new URL('../', session.info.webId!)).toString())
+        urls.push((new URL('../', webId)).toString())
     }
     return urls;
 }
 
+/**
+  * Get the storage description following the solid specification (only if the webid is hosted on the pod)
+  */
+async function fetchStorageTriple(webId: string) {
+    const resp = await fetch(webId, {
+        // If cache is used some links headers are not passed
+        cache: "no-cache"
+    });
+    if (!resp.ok) {
+        throw new Error("Failed to make HEAD request to webId")
+    }
+    const links = resp.headers.get("link")?.split(", ")
+    const storageDescriptionUrl = links?.find(l => l.includes('rel="http://www.w3.org/ns/solid/terms#storageDescription"'))?.replace(/<([^>]+)>.*/, "$1")
+    if (!storageDescriptionUrl) {
+        return undefined
+    }
+
+    const dataset = await getSolidDataset(storageDescriptionUrl)
+    const things = getThingAll(dataset);
+    const storageThing = things.find(t => t.predicates["http://www.w3.org/1999/02/22-rdf-syntax-ns#type"].namedNodes?.includes("http://www.w3.org/ns/pim/space#Storage"));
+    return storageThing?.url
+}
 
 /**
  * @param session An active Solid client connection
@@ -50,7 +81,7 @@ export async function getProfileInfo(
     const mbox = getUrl(profileThing, Schema.mbox) ?? "";
     const description =
         getStringWithLocale(profileThing, Schema.description, "en-us") ?? "";
-    const img = getUrl(profileThing, Schema.img) ?? "";
+    const img = getUrl(profileThing, Schema.img) ?? (import.meta.env.BASE_URL + "profile.svg");
     const phone = getUrl(profileThing, Schema.phone) ?? "";
 
     return { name, mbox, description, img, phone };
