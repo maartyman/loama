@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Add automated UI tests on ./loama
+- Add Github action to run UI tests on PR to default branch
+
 ## [0.1.0] - 2025-02-20
 
 ### Added

@@ -17,7 +17,7 @@
                 <span>Can people ask access to this resource?</span>
             </div>
             <p>Subjects with access:</p>
-            <ul>
+            <ul data-testid="sidepanel-permission-list">
                 <li :key="activeController.getLabelForSubject(permission.subject)"
                     v-for="permission in podStore.selectedEntry.permissionsPerSubject">
                     {{ activeController.getLabelForSubject(permission.subject) }}
@@ -114,10 +114,8 @@ a {
     gap: .5rem;
 }
 </style>
-<style src="@vueform/multiselect/themes/default.css"></style>
 <style>
 .permission-drawer {
     width: 90vw !important;
 }
 </style>
-<style src="@vueform/multiselect/themes/default.css"></style>
