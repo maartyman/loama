@@ -17,7 +17,7 @@
                 <span>Can people ask access to this resource?</span>
             </div>
             <p>Subjects with access:</p>
-            <ul>
+            <ul data-testid="sidepanel-permission-list">
                 <li :key="activeController.getLabelForSubject(permission.subject)"
                     v-for="permission in podStore.selectedEntry.permissionsPerSubject">
                     {{ activeController.getLabelForSubject(permission.subject) }}

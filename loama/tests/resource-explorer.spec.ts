@@ -20,7 +20,7 @@ test.describe("Resource Explorer", () => {
         });
     })
     test("Can go up a level", async ({ page }) => {
-        await page.getByRole("button", { name: "View resources" }).click();
+        await page.getByText('profileView resources').getByRole("button", { name: "View resources" }).click();
         const breadcrumsElement = page.locator("#explorer-breadcrumbs");
         await expect(breadcrumsElement).toContainText("/home/profile/");
 
