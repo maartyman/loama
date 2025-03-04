@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Add automated UI tests on ./loama
-- Add Github action to run UI tests on PR to default branch
+- Add automated UI tests on ./loama, but did not include them in github CI (see also [issue #43](https://github.com/SolidLabResearch/loama/issues/43)).
 
 ## [0.1.0] - 2025-02-20
 

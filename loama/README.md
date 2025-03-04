@@ -22,13 +22,16 @@ yarn build
 
 ```
 
-## How to test this project
+## How to execute automated tests for this project
+
+> [!NOTE]
+> These test are not 100% reproducible, so for the time being they are not in github ci. See also `loama/.github/workflows/playwright.yml.disabled` (mind the "disabled" in the filename).
 
 - First do a full build of the repo
-    - Open a terminal in the root of this repo
-    - Run `yarn` to install all dependencies
-    - Run `yarn build` to build all dependencies
-- Make sure your are in the `loama` subdirectory
+  - Open a terminal in the root of this repo
+  - Run `yarn` to install all dependencies
+  - Run `yarn build` to build all dependencies
+- Make sure you are in the `loama` subdirectory
 - Run `yarn playwright install --with-deps` to install the headless browsers + system dependencies
 - Now you are ready to run the test suite `yarn test`, this will spin-up a preview server on port 4173 & a CSS on port 8080. Make sure nothing else is running on these ports as playwright will otherwise think those services are the services it tries to start
 
@@ -36,6 +39,7 @@ yarn build
 > These test are created with the assumption that the solid server adds some basic files to the pods like the README and profile/card
 
 ### How to manually test this project
+
 - Login with a valid IDP
 - Select a file (I've mostly used the README file)
 - In the right column, click the "Edit" button. This should open a drawer. 

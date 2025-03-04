@@ -96,9 +96,3 @@ Now you can find loama at <http://localhost:5173>, or in a URL with a path, if y
 2. `docker compose up -d --wait`
 
 This will spin up a Community Solid Server on port 3000.
-
-### Automated tests
-
-The `./loama` subproject contains automated tests and these are added to the github workflow.
-
-See the local [README](./loama/README.md) for details to execute these tests locally.
