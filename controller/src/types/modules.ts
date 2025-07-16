@@ -140,3 +140,46 @@ export interface IPermissionManager<T = Record<string, BaseSubject<string>>> {
     */
     shouldDeleteOnAllRevoked(): boolean
 }
+
+// Temporal (?) interface to represent a policy
+export interface IPolicy {
+    rules: IRule[];
+    id: string;
+}
+
+export type RuleType = 'permission' | 'prohibition' | 'duty';
+
+// Temporal (?) interface to represent a rule within a policy
+export interface IRule {
+    // What kind of rule is this
+    ruleType: RuleType;
+
+    // Every rule has one assigner represented by its webID
+    assigner: string;
+
+    // Multiple assignees possible
+    assignees: string[];
+
+    // What actions does this rule definine?
+    permissions: string[];
+
+    // target objects of the rule
+    targets: string[];
+
+    // ID
+    id: string;
+}
+
+export interface ITarget {
+    // The uri of the target
+    uri: string;
+
+    // The rule IDs where target is mentioned
+    rules: Set<string>;
+
+    // The policy IDs where target is mentioned
+    policies: Set<string>;
+
+    // the actions set to the target
+    permissions: Set<Permission>;
+}
