@@ -43,6 +43,7 @@ export interface SubjectPermissions<T = BaseSubject<string>> {
     subject: T;
     permissions: Permission[];
     isEnabled: boolean;
+    targetId?: string;
 }
 
 export interface ResourcePermissions<T = BaseSubject<string>> {

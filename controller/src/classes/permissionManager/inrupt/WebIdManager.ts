@@ -36,6 +36,7 @@ export class WebIdManager<T extends Record<keyof T, BaseSubject<keyof T & string
         // Extract our webID
         const session = getDefaultSession();
         const webId = session.info.webId;
+        console.log("webId", webId)
 
         // We must be logged on
         if (!webId) {
@@ -53,6 +54,8 @@ export class WebIdManager<T extends Record<keyof T, BaseSubject<keyof T & string
             }
         });
 
+        // Add call to retrieve the other subject related to the clients targets
+
         const turtleText = await response.text();
         console.log("Retrieved Turtle:", turtleText);
 
@@ -67,10 +70,11 @@ export class WebIdManager<T extends Record<keyof T, BaseSubject<keyof T & string
         return targets.map(target => ({
             subject: {
                 type: "webId",
-                selector: { url: target.uri },
+                selector: { url: webId },
             } as unknown as T[K],
             permissions: [...target.permissions],
-            isEnabled: true
+            isEnabled: true,
+            targetId: target.uri
         }));
     }
 

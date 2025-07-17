@@ -242,12 +242,13 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
         console.log('Controller.getContainerPermissionList called');
         console.log('Arguments:', { containerUrl });
 
-        // const targets = await new WebIdManager().getRemotePermissions("");
         // Use the subjectConfigs to get permissions for the container
         // For each subjectConfig, call its manager.getRemotePermissions for the containerUrl
+
+        // Eventually, we would only need to use the webIDManager...
         const configs: SubjectConfig<T>[] = Object.values(this.subjectConfigs);
         const results = await Promise.all(
-            configs.filter(c => (c.manager as WebIdManager<T>).type === 'webID').map(c => c.manager.getRemotePermissions<keyof T & string>(containerUrl))
+            configs.map(c => c.manager.getRemotePermissions<keyof T & string>(containerUrl))
         );
         // Flatten the results and process as needed
         const targets = results.flat();
@@ -257,7 +258,7 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
             console.log("result", result)
             resourcePermissions.push(
                 {
-                    resourceUrl: result.subject.selector?.url ?? "if you see this, something went wrong",
+                    resourceUrl: result.targetId ?? "if you see this, something went wrong",
                     canRequestAccess: await this.accessRequest.canRequestAccessToResource(result.subject.selector?.url),
                     permissionsPerSubject: [{ subject: result.subject, permissions: result.permissions, isEnabled: result.isEnabled }]
                 })
