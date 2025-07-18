@@ -170,16 +170,32 @@ export interface IRule {
     id: string;
 }
 
-export interface ITarget {
+// The interface to display the permissions for one subject on one target
+export interface ISpecificTargetInfo {
+
+    // Indicate whether its public
+    public: boolean;
+
     // The uri of the target
     uri: string;
 
-    // The rule IDs where target is mentioned
-    rules: Set<string>;
-
-    // The policy IDs where target is mentioned
-    policies: Set<string>;
+    // The client that has permission over this target
+    subject: string;
 
     // the actions set to the target
     permissions: Set<Permission>;
+}
+
+// A target can have multiple private subjects and a public subject
+export interface TargetSubjects {
+    targetUrl: string;
+
+    // The map of subject names and their permissions on this target
+    private?: Map<string, ISpecificTargetInfo>;
+
+    // The public permission settings for this target
+    public?: ISpecificTargetInfo;
+
+    // WebID of the target owner
+    assigner: string;
 }

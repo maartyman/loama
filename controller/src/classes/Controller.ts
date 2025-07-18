@@ -47,7 +47,7 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
         console.log('Arguments:', { resourceUrl, subject });
         const item = await this.getItem(resourceUrl, subject);
         if (item) {
-            // Makeing sure the array is not a reference to the one stored in the index
+            // Making sure the array is not a reference to the one stored in the index
             return [...item.permissions]
         }
         return this.getExistingRemotePermissions(resourceUrl, subject);
@@ -143,21 +143,30 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
     }
 
     async addPermission<K extends SubjectKey<T>>(resourceUrl: string, addedPermission: Permission, subject: SubjectType<T, K>) {
-        console.log('Controller.addPermission called');
-        console.log('Arguments:', { resourceUrl, addedPermission, subject });
+        console.log("add permission with: ", { resourceUrl, addedPermission, subject })
         const release = await this.acquire();
         try {
-            let permissions = await this.getExistingPermissions(resourceUrl, subject);
 
-            if (permissions.indexOf(addedPermission) !== -1) {
-                console.error("Permission already granted")
-                return permissions;
-            }
+            // 1. Collect already existing permissions
+            const permissions = subject.type === "webId"
+                ? (await this.getSubjectConfig(subject).manager.getRemotePermissions(resourceUrl))
+                    .filter(p => p.subject.type === "webId" && p.subject.selector!.url === subject.selector!.url)
+                    .map(p => p.permissions)[0] ?? []
+                : [];
 
-            permissions.push(addedPermission)
+            // 2. Let the manager add the permission, and return the 
 
-            await this.updateItem(resourceUrl, subject, permissions)
-            return permissions;
+
+
+            // if (permissions.indexOf(addedPermission) !== -1) {
+            //     console.error("Permission already granted")
+            //     return permissions;
+            // }
+
+            // permissions.push(addedPermission)
+
+            // await this.updateItem(resourceUrl, subject, permissions)
+            return [];
         } catch (e) {
             throw e;
         } finally {
@@ -248,25 +257,10 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
         // Eventually, we would only need to use the webIDManager...
         const configs: SubjectConfig<T>[] = Object.values(this.subjectConfigs);
         const results = await Promise.all(
-            configs.map(c => c.manager.getRemotePermissions<keyof T & string>(containerUrl))
+            configs.map(c => c.manager.getContainerPermissionList(containerUrl))
         );
-        // Flatten the results and process as needed
-        const targets = results.flat();
-        const resourcePermissions: ResourcePermissions<T[keyof T]>[] = [];
 
-        targets.forEach(async result => {
-            console.log("result", result)
-            resourcePermissions.push(
-                {
-                    resourceUrl: result.targetId ?? "if you see this, something went wrong",
-                    canRequestAccess: await this.accessRequest.canRequestAccessToResource(result.subject.selector?.url),
-                    permissionsPerSubject: [{ subject: result.subject, permissions: result.permissions, isEnabled: result.isEnabled }]
-                })
-        });
-
-        console.log(resourcePermissions)
-
-        return resourcePermissions
+        return results.flat()
     }
 
     // NOTE: Do we want to force this to only use the index stored in the store?

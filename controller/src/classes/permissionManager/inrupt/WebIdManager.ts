@@ -1,38 +1,25 @@
 import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
-import { BaseSubject, IndexItem, Permission, SubjectPermissions } from "../../../types";
+import { BaseSubject, IndexItem, Permission, ResourcePermissions, SubjectPermissions } from "../../../types";
 import { IPermissionManager, SubjectKey } from "../../../types/modules";
 import { InruptPermissionManager } from "./InruptPermissionManager";
-import { setAgentAccess } from "@inrupt/solid-client/universal";
-import { AccessModes, } from "@inrupt/solid-client";
-import { PolicyParser } from "../../utils/PolicyParser";
+import { ODRL, PolicyParser } from "../../utils/PolicyParser";
 
+// Temporal
 
 export class WebIdManager<T extends Record<keyof T, BaseSubject<keyof T & string>>> extends InruptPermissionManager<T> implements IPermissionManager<T> {
-    private async updateACL<K extends SubjectKey<T>>(resource: string, subject: T[K], accessModes: Partial<AccessModes>) {
-        const session = getDefaultSession();
-        if (!subject.selector?.url) {
-            throw new Error("Missing url selector on WebID subject")
-        }
-        await setAgentAccess(resource, subject.selector.url, accessModes, {
-            fetch: session.fetch
-        })
-    }
+
     //. NOTE: Currently, it doesn't do any recursive permission setting on containers
     async createPermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]): Promise<void> {
-        const accessModes = this.permissionsToAccessModes(permissions, []);
-        await this.updateACL(resource, subject, accessModes)
     }
 
     async deletePermissions<K extends SubjectKey<T>>(resource: string, subject: T[K]) {
-        await this.updateACL(resource, subject, {});
     }
 
     async editPermissions<K extends SubjectKey<T>>(resource: string, item: IndexItem, subject: T[K], permissions: Permission[]) {
-        const accessModes = this.editPermissionsToAccessModes(item, permissions);
-        await this.updateACL(resource, subject, accessModes)
     }
 
-    async getRemotePermissions<K extends SubjectKey<T>>(resourceUrl: string): Promise<SubjectPermissions<T[K]>[]> {
+
+    async getContainerPermissionList(containerUrl: string, resourceToSkip: string[] = []): Promise<ResourcePermissions<T[keyof T]>[]> {
         // Extract our webID
         const session = getDefaultSession();
         const webId = session.info.webId;
@@ -43,40 +30,21 @@ export class WebIdManager<T extends Record<keyof T, BaseSubject<keyof T & string
             throw new Error("User not logged in");
         }
 
-        // Temporal
-        const url = "http://localhost:4000/uma/policies";
+        const store = await this.fetchPolicies(webId);
 
-        // Get all our policies
-        const response = await fetch(url, {
-            headers: {
-                "Authorization": webId,
-                "Accept": "text/turtle"
-            }
-        });
+        // Collect target urls
+        const targetUrls = Array.from(new Set(store.getQuads(null, ODRL('target'), null, null).map(q => q.object.id)));
+        const resourcePermissions: ResourcePermissions<T[keyof T]>[] = []
+        for (const targetUrl of targetUrls) {
+            console.log(targetUrl)
+            const perms = await this.getRemotePermissions(targetUrl);
+            resourcePermissions.push({
+                resourceUrl: targetUrl,
+                canRequestAccess: true, // TODO: based on proper access logic
+                permissionsPerSubject: perms
+            })
+        }
 
-        // Add call to retrieve the other subject related to the clients targets
-
-        const turtleText = await response.text();
-        console.log("Retrieved Turtle:", turtleText);
-
-        // Use parser to extract an N3 Store
-        const parser = new PolicyParser();
-        const store = parser.parseText(turtleText);
-
-        // Parse to SubjectPermissions
-        const targets = parser.ownedPoliciesToObject(store);
-
-        // Do we even need different subject types when always working with policy targets.....
-        return targets.map(target => ({
-            subject: {
-                type: "webId",
-                selector: { url: webId },
-            } as unknown as T[K],
-            permissions: [...target.permissions],
-            isEnabled: true,
-            targetId: target.uri
-        }));
+        return resourcePermissions;
     }
-
-    type = 'webID';
 }

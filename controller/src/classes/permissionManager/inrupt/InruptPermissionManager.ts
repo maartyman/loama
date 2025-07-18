@@ -1,7 +1,10 @@
 import { Access, AccessModes, getSolidDataset, getThingAll } from "@inrupt/solid-client";
 import { SubjectPermissions, BaseSubject, IndexItem, Permission, ResourcePermissions } from "../../../types";
-import { SubjectKey } from "../../../types/modules";
+import { SubjectKey, TargetSubjects } from "../../../types/modules";
 import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
+import { PolicyParser } from "../../../classes/utils/PolicyParser";
+import { Store } from "n3";
+import { PolicyEditor } from "../../../classes/utils/PolicyEditor";
 
 const ACCESS_MODES_TO_PERMISSION_MAPPING: Record<keyof (AccessModes & Access), Permission> = {
     read: Permission.Read,
@@ -12,6 +15,7 @@ const ACCESS_MODES_TO_PERMISSION_MAPPING: Record<keyof (AccessModes & Access), P
     controlWrite: Permission.Control,
 }
 
+export const UMA_URL = (encodedId: string = "") => `http://localhost:4000/uma/policies${encodedId}`
 
 /**
  * A permission manager implementation using the inrupt sdk to actually update the ACL
@@ -75,38 +79,86 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         return accessModes;
     }
 
-    abstract getRemotePermissions<K extends SubjectKey<T>>(resourceUrl: string): Promise<SubjectPermissions<T[K]>[]>
+    protected async fetchPolicies(webId: string) {
 
-    async getContainerPermissionList(containerUrl: string, resourceToSkip: string[] = []) {
-        const session = getDefaultSession();
-        // this request is cached, so it doesn't matter if it's emitted multiple times in a short span
-        const dataset = await getSolidDataset(containerUrl, { fetch: session.fetch });
-        const results = await Promise.allSettled(
-            getThingAll(dataset)
-                .map(async (resource) => {
-                    if (resourceToSkip.includes(resource.url)) {
-                        return {
-                            resourceUrl: resource.url,
-                            // We can set this to false as this is the default & getting doubled checked in the controller
-                            canRequestAccess: false,
-                            permissionsPerSubject: [],
-                        }
-                    }
-                    return {
-                        resourceUrl: resource.url,
-                        // We can set this to false as this is the default & getting doubled checked in the controller
-                        canRequestAccess: false,
-                        permissionsPerSubject: await this.getRemotePermissions(resource.url)
-                    }
-                })
-        )
-        return results.reduce<ResourcePermissions<T[keyof T]>[]>((arr, v) => {
-            if (v.status == "fulfilled") {
-                arr.push(v.value);
+        // Get all our policies
+        const response = await fetch(UMA_URL(), {
+            headers: {
+                "Authorization": webId,
+                "Accept": "text/turtle"
             }
-            return arr;
-        }, [])
+        });
 
+        // Extract the target Ids
+        const turtleText = await response.text();
+        console.log("Retrieved Turtle:", turtleText);
+
+        // Use parser to extract an N3 Store
+        const parser = new PolicyParser();
+        return parser.parseText(turtleText);
+    }
+
+
+    public async getRemotePermissions<K extends SubjectKey<T>>(resourceUrl: string): Promise<SubjectPermissions<T[K]>[]> {
+        // Extract our webID
+        const session = getDefaultSession();
+        const webId = session.info.webId;
+        console.log("webId", webId)
+
+        // We must be logged on
+        if (!webId) {
+            throw new Error("User not logged in");
+        }
+        const store = await this.fetchPolicies(webId)
+
+        // Use parser to extract an N3 Store
+        const parser = new PolicyParser();
+
+        // Parse to SubjectPermissions
+        const targets: TargetSubjects[] = parser.permissionsForOneResource(resourceUrl, store);
+
+        const subjectPermissions: SubjectPermissions<T[K]>[] = [];
+        targets.forEach(target => {
+            // Add the owner information
+            subjectPermissions.push({
+                subject: {
+                    type: "webId",
+                    selector: { url: target.assigner }
+                } as unknown as T[K],
+                permissions: [Permission.Append, Permission.Control, Permission.Read, Permission.Write],
+                isEnabled: true,
+                targetId: target.targetUrl
+            })
+
+            // Add the public information
+            if (target.public) subjectPermissions.push({
+                subject: {
+                    type: "public",
+                } as unknown as T[K],
+                permissions: Array.from(target.public.permissions),
+                isEnabled: true, // Not yet implemented
+                targetId: target.targetUrl
+            })
+
+            // Add the private subjects
+            if (target.private) target.private.forEach(subject => subjectPermissions.push({
+                subject: {
+                    type: "webId",
+                    selector: { url: subject.subject }
+                } as unknown as T[K],
+                permissions: Array.from(subject.permissions),
+                isEnabled: true, // Not yet implemented
+                targetId: target.targetUrl
+            }))
+        }
+        );
+
+        return subjectPermissions;
+    }
+
+
+    async getContainerPermissionList(containerUrl: string, resourceToSkip: string[] = []): Promise<ResourcePermissions<T[keyof T]>[]> {
+        return [];
     }
 
     shouldDeleteOnAllRevoked() { return true }
