@@ -58,4 +58,6 @@ export class GroupManager<T extends Record<keyof T, BaseSubject<keyof T & string
             isEnabled: true,
         }))
     }
+
+    type = 'groupManager'
 }

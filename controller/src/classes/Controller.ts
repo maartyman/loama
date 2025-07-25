@@ -1,3 +1,4 @@
+import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
 import { BaseSubject, Index, IndexItem, Permission, ResourcePermissions, Resources, SubjectPermissions } from "../types";
 import { IAccessRequest, IController, IInboxConstructor, IStore, IStoreConstructor, SubjectConfig, SubjectConfigs, SubjectKey, SubjectType } from "../types/modules";
 import { AccessRequest } from "./accessRequests/AccessRequest";
@@ -56,46 +57,46 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
     private async updateItem<K extends SubjectKey<T>>(resourceUrl: string, subject: SubjectType<T, K>, permissions: Permission[], alwaysKeepItem = false) {
         console.log('Controller.updateItem called');
         console.log('Arguments:', { resourceUrl, subject, permissions, alwaysKeepItem });
-        let item = await this.getItem(resourceUrl, subject);
-        const { manager } = this.getSubjectConfig(subject)
+        // let item = await this.getItem(resourceUrl, subject);
+        // const { manager } = this.getSubjectConfig(subject)
 
-        if (item) {
-            await manager.editPermissions(resourceUrl, item, subject, permissions);
-        } else {
-            await manager.createPermissions(resourceUrl, subject, permissions);
+        // if (item) {
+        //     await manager.editPermissions(resourceUrl, item, subject, permissions);
+        // } else {
+        //     await manager.createPermissions(resourceUrl, subject, permissions);
 
-            item = {
-                id: crypto.randomUUID(),
-                requestId: crypto.randomUUID(),
-                isEnabled: true,
-                permissions: permissions,
-                resource: resourceUrl,
-                subject: subject,
-            }
+        //     item = {
+        //         id: crypto.randomUUID(),
+        //         requestId: crypto.randomUUID(),
+        //         isEnabled: true,
+        //         permissions: permissions,
+        //         resource: resourceUrl,
+        //         subject: subject,
+        //     }
 
-            const index = await this.index.getCurrent();
-            index.items.push(item);
-        }
+        //     const index = await this.index.getCurrent();
+        //     index.items.push(item);
+        // }
 
-        if (!alwaysKeepItem && permissions.length === 0 && manager.shouldDeleteOnAllRevoked()) {
-            const index = await this.index.getCurrent();
-            const idx = index.items.findIndex(i => i.id === item.id);
-            index.items.splice(idx, 1);
-        } else {
-            item.permissions = permissions;
+        // if (!alwaysKeepItem && permissions.length === 0 && manager.shouldDeleteOnAllRevoked()) {
+        //     const index = await this.index.getCurrent();
+        //     const idx = index.items.findIndex(i => i.id === item.id);
+        //     index.items.splice(idx, 1);
+        // } else {
+        //     item.permissions = permissions;
 
-            // The SOLID server OR the SDK does not directly push the update to the acl files for some reason
-            // Here we give it some time to save/push the changes
-            await new Promise(res => setTimeout(res, 500));
-            // extra check what the ACL currently has stored as info. Will decrease the chance of the index going out of sync with the ACL file
-            const remotePermissions = await this.getExistingRemotePermissions(resourceUrl, subject);
-            if (remotePermissions !== permissions) {
-                console.debug("Permissions in index are out of sync with remote, updating index...", subject);
-                item.permissions = remotePermissions;
-            }
-        }
+        //     // The SOLID server OR the SDK does not directly push the update to the acl files for some reason
+        //     // Here we give it some time to save/push the changes
+        //     await new Promise(res => setTimeout(res, 500));
+        //     // extra check what the ACL currently has stored as info. Will decrease the chance of the index going out of sync with the ACL file
+        //     const remotePermissions = await this.getExistingRemotePermissions(resourceUrl, subject);
+        //     if (remotePermissions !== permissions) {
+        //         console.debug("Permissions in index are out of sync with remote, updating index...", subject);
+        //         item.permissions = remotePermissions;
+        //     }
+        // }
 
-        await this.index.saveToRemote();
+        // await this.index.saveToRemote();
     }
 
     AccessRequest(): IAccessRequest {
@@ -107,23 +108,24 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
     async setPodUrl(podUrl: string) {
         console.log('Controller.setPodUrl called');
         console.log('Arguments:', { podUrl });
-        this.index.setPodUrl(podUrl);
-        this.resources.setPodUrl(podUrl);
-        await this.accessRequest.setPodUrl(podUrl)
+        // this.index.setPodUrl(podUrl);
+        // this.resources.setPodUrl(podUrl);
+        // await this.accessRequest.setPodUrl(podUrl)
     }
 
     unsetPodUrl() {
         console.log('Controller.unsetPodUrl called');
         console.log('Arguments:', {});
-        this.index.unsetPodUrl();
-        this.resources.unsetPodUrl();
-        this.accessRequest.unsetPodUrl();
+        // this.index.unsetPodUrl();
+        // this.resources.unsetPodUrl();
+        // this.accessRequest.unsetPodUrl();
     }
 
     async getOrCreateIndex() {
         console.log('Controller.getOrCreateIndex called');
         console.log('Arguments:', {});
-        return this.index.getOrCreate();
+        // return this.index.getOrCreate();
+        return { id: "", items: [] }
     }
 
     getLabelForSubject<K extends SubjectKey<T>>(subject: T[K]): string {
@@ -136,10 +138,11 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
     async getItem<K extends SubjectKey<T>>(resourceUrl: string, subject: SubjectType<T, K>): Promise<IndexItem<T[K]> | undefined> {
         console.log('Controller.getItem called');
         console.log('Arguments:', { resourceUrl, subject });
-        const { resolver } = this.getSubjectConfig<K>(subject);
+        // const { resolver } = this.getSubjectConfig<K>(subject);
 
-        const index = await this.index.getCurrent() as Index<T[K]>;
-        return resolver.getItem(index, resourceUrl, subject.selector)
+        // const index = await this.index.getCurrent() as Index<T[K]>;
+        // return resolver.getItem(index, resourceUrl, subject.selector)
+        return {} as IndexItem<T[K]>
     }
 
     async addPermission<K extends SubjectKey<T>>(resourceUrl: string, addedPermission: Permission, subject: SubjectType<T, K>) {
@@ -147,16 +150,12 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
         const release = await this.acquire();
         try {
 
-            // 1. Collect already existing permissions
-            const permissions = subject.type === "webId"
-                ? (await this.getSubjectConfig(subject).manager.getRemotePermissions(resourceUrl))
-                    .filter(p => p.subject.type === "webId" && p.subject.selector!.url === subject.selector!.url)
-                    .map(p => p.permissions)[0] ?? []
-                : [];
+            // 1. Create a new permission for the subject
+            await this.getSubjectConfig(subject).manager.createPermissions(resourceUrl, subject, [addedPermission])
 
-            // 2. Let the manager add the permission, and return the 
-
-
+            // 2. Let the manager add the permission, return the updated version
+            const webId = getDefaultSession().info.webId!;
+            const permissions = await this.getSubjectConfig(subject).manager.getTargetPermissionsForUser(webId, subject.selector!.url, resourceUrl);
 
             // if (permissions.indexOf(addedPermission) !== -1) {
             //     console.error("Permission already granted")
@@ -166,7 +165,7 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
             // permissions.push(addedPermission)
 
             // await this.updateItem(resourceUrl, subject, permissions)
-            return [];
+            return permissions; //Promise[]
         } catch (e) {
             throw e;
         } finally {
@@ -185,7 +184,7 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
         const item = subjectConfig.resolver.getItem(index, resourceUrl, subject.selector);
         if (!item) return;
 
-        await subjectConfig.manager.deletePermissions(resourceUrl, subject);
+        await subjectConfig.manager.deletePermissions(resourceUrl, subject, []);
 
         const idx = index.items.findIndex(i => subjectConfig.resolver.checkMatch(i.subject, subject));
         index.items.splice(idx, 1);
@@ -196,20 +195,21 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
     async removePermission<K extends SubjectKey<T>>(resourceUrl: string, removedPermission: Permission, subject: SubjectType<T, K>) {
         console.log('Controller.removePermission called');
         console.log('Arguments:', { resourceUrl, removedPermission, subject });
-        const release = await this.acquire();
+        const release = await this.acquire()
         try {
-            let oldPermissions = await this.getExistingPermissions(resourceUrl, subject);
-            let newPermissions = oldPermissions.filter((p) => p !== removedPermission);
 
-            if (newPermissions.length === oldPermissions.length) {
-                console.error("Permission not found")
-                return oldPermissions;
-            }
+            // 1. Delete a permission for the subject
+            console.log("were here", removedPermission, subject)
+            await this.getSubjectConfig(subject).manager.deletePermissions(resourceUrl, subject, [removedPermission]);
 
-            await this.updateItem(resourceUrl, subject, newPermissions)
-            return newPermissions;
-        } catch (e) {
-            throw e;
+            // 2. Let the manager delete the permission, return the updated version
+            const webId = getDefaultSession().info.webId!;
+            const permissions = await this.getSubjectConfig(subject).manager.getTargetPermissionsForUser(webId, subject.selector!.url, resourceUrl);
+
+            return permissions
+
+        } catch (error) {
+            return []
         } finally {
             release();
         }
@@ -256,45 +256,26 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
 
         // Eventually, we would only need to use the webIDManager...
         const configs: SubjectConfig<T>[] = Object.values(this.subjectConfigs);
+        console.log(configs)
         const results = await Promise.all(
-            configs.map(c => c.manager.getContainerPermissionList(containerUrl))
-        );
+            configs.filter(c => c.manager.type === "webId").map(c => c.manager.getContainerPermissionList(containerUrl)));
 
         return results.flat()
     }
 
     // NOTE: Do we want to force this to only use the index stored in the store?
-    async getResourcePermissionList(resourceUrl: string) {
-        console.log('Controller.getResourcePermissionList called');
-        console.log('Arguments:', { resourceUrl });
-        // Need to put it in a variable because the type declaration vanishes
+    async getResourcePermissionList(resourceUrl: string): Promise<ResourcePermissions<T[keyof T]>> {
         const configs: SubjectConfig<T>[] = Object.values(this.subjectConfigs);
-        const index = await this.index.getCurrent();
-        const results = await Promise.allSettled(configs.map(c => c.manager.getRemotePermissions<keyof T & string>(resourceUrl)))
-
-        let permissionsPerSubject = index.items.filter(i => i.resource === resourceUrl)
+        console.log(configs)
+        const results = await Promise.all(
+            configs.filter(c => c.manager.type === 'webId').map(c => c.manager.getRemotePermissions(resourceUrl))
+        );
 
         return {
             resourceUrl,
-            canRequestAccess: await this.accessRequest.canRequestAccessToResource(resourceUrl),
-            permissionsPerSubject: results.reduce<SubjectPermissions<T[keyof T & string]>[]>((arr, v) => {
-                if (v.status === "fulfilled") {
-                    v.value.forEach(remotePps => {
-                        const { resolver } = this.getSubjectConfig(remotePps.subject);
-                        const indexItem = arr.find(pps => resolver.checkMatch(remotePps.subject, pps.subject));
-
-                        if (indexItem) {
-                            if (indexItem.isEnabled) {
-                                indexItem.permissions = remotePps.permissions;
-                            }
-                        } else {
-                            arr.push(remotePps)
-                        }
-                    })
-                }
-                return arr;
-            }, permissionsPerSubject)
-        }
+            canRequestAccess: true, // TODO
+            permissionsPerSubject: results.flat()
+        };
     }
 
     isSubjectSupported<K extends string, B extends BaseSubject<K>>(subject: BaseSubject<K>): IController<Record<K, B>> {

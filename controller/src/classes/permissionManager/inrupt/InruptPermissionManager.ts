@@ -2,9 +2,9 @@ import { Access, AccessModes, getSolidDataset, getThingAll } from "@inrupt/solid
 import { SubjectPermissions, BaseSubject, IndexItem, Permission, ResourcePermissions } from "../../../types";
 import { SubjectKey, TargetSubjects } from "../../../types/modules";
 import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
-import { PolicyParser } from "../../../classes/utils/PolicyParser";
-import { Store } from "n3";
-import { PolicyEditor } from "../../../classes/utils/PolicyEditor";
+import { ODRL, PolicyParser } from "../../../classes/utils/PolicyParser";
+import { PolicyInterpreter } from "../../../classes/utils/PolicyInterpreter";
+import { Store } from 'n3';
 
 const ACCESS_MODES_TO_PERMISSION_MAPPING: Record<keyof (AccessModes & Access), Permission> = {
     read: Permission.Read,
@@ -98,12 +98,43 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         return parser.parseText(turtleText);
     }
 
+    protected async fetchOnePolicy(webId: string, policyId: string) {
+        // Get all our policies
+        const response = await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
+            headers: {
+                "Authorization": webId,
+                "Accept": "text/turtle"
+            }
+        });
+
+        const turtleText = await response.text();
+
+        // Use parser to extract an N3 Store
+        const parser = new PolicyParser();
+        return parser.parseText(turtleText);
+    }
+
+    /**
+     * Function to specifically get the permission list for an assignee on a certain target
+     * 
+     * TODO: split in subject
+     */
+    public async getTargetPermissionsForUser(assignerId: string, assigneeId: string, targetId: string): Promise<Permission[]> {
+        const store: Store = await this.fetchPolicies(assignerId);
+        const target: TargetSubjects = new PolicyInterpreter().permissionsForOneResource(targetId, store);
+
+        // If there are no private permissions, or no private permissions for the assignee, return the public ones (or nothing if they don't exist)
+        if (!target.private || !target.private.get(assigneeId)) return Array.from(target.public?.permissions!) ?? []
+
+        return Array.from(target.private.get(assigneeId)?.permissions!) ?? []
+    }
+
 
     public async getRemotePermissions<K extends SubjectKey<T>>(resourceUrl: string): Promise<SubjectPermissions<T[K]>[]> {
         // Extract our webID
         const session = getDefaultSession();
         const webId = session.info.webId;
-        console.log("webId", webId)
+        console.log("webId", webId, resourceUrl)
 
         // We must be logged on
         if (!webId) {
@@ -112,13 +143,13 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         const store = await this.fetchPolicies(webId)
 
         // Use parser to extract an N3 Store
-        const parser = new PolicyParser();
+        const interpreter = new PolicyInterpreter();
 
         // Parse to SubjectPermissions
-        const targets: TargetSubjects[] = parser.permissionsForOneResource(resourceUrl, store);
+        const target: TargetSubjects = interpreter.permissionsForOneResource(resourceUrl, store);
 
-        const subjectPermissions: SubjectPermissions<T[K]>[] = [];
-        targets.forEach(target => {
+        if (target) {
+            const subjectPermissions: SubjectPermissions<T[K]>[] = [];
             // Add the owner information
             subjectPermissions.push({
                 subject: {
@@ -150,15 +181,40 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
                 isEnabled: true, // Not yet implemented
                 targetId: target.targetUrl
             }))
+            return subjectPermissions;
         }
-        );
 
-        return subjectPermissions;
+        return [];
     }
 
 
     async getContainerPermissionList(containerUrl: string, resourceToSkip: string[] = []): Promise<ResourcePermissions<T[keyof T]>[]> {
-        return [];
+        // Extract our webID
+        const session = getDefaultSession();
+        const webId = session.info.webId;
+        console.log("webId", webId)
+
+        // We must be logged on
+        if (!webId) {
+            throw new Error("User not logged in");
+        }
+
+        const store = await this.fetchPolicies(webId);
+
+        // Collect target urls
+        const targetUrls = Array.from(new Set(store.getQuads(null, ODRL('target'), null, null).map(q => q.object.id)));
+        const resourcePermissions: ResourcePermissions<T[keyof T]>[] = []
+        for (const targetUrl of targetUrls) {
+            console.log(targetUrl)
+            const perms = await this.getRemotePermissions(targetUrl);
+            resourcePermissions.push({
+                resourceUrl: targetUrl,
+                canRequestAccess: true, // TODO: based on proper access logic
+                permissionsPerSubject: perms
+            })
+        }
+
+        return resourcePermissions;
     }
 
     shouldDeleteOnAllRevoked() { return true }

@@ -126,7 +126,7 @@ export interface IPermissionManager<T = Record<string, BaseSubject<string>>> {
     createPermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]): Promise<void>
     // Does not update the index file
     editPermissions<K extends SubjectKey<T>>(resource: string, item: IndexItem, subject: T[K], permissions: Permission[]): Promise<void>
-    deletePermissions<K extends SubjectKey<T>>(resource: string, subject: T[K]): Promise<void>
+    deletePermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]): Promise<void>
     getRemotePermissions<K extends SubjectKey<T>>(resourceUrl: string): Promise<SubjectPermissions<T[K]>[]>
     /**
     * Retrieve the permissions of the resources in this container.
@@ -139,6 +139,8 @@ export interface IPermissionManager<T = Record<string, BaseSubject<string>>> {
     * This indicates if the underlying SDK automatically removes the entry from the SDK if all permissions are revoked
     */
     shouldDeleteOnAllRevoked(): boolean
+    getTargetPermissionsForUser(assignerId: string, assigneeId: string, targetId: string): Promise<Permission[]>;
+    type: string;
 }
 
 // Temporal (?) interface to represent a policy
@@ -198,4 +200,10 @@ export interface TargetSubjects {
 
     // WebID of the target owner
     assigner: string;
+
+    // The policies referring to this target
+    policies: Set<string>;
+
+    // The rules referring to this target
+    rules: Set<string>;
 }
