@@ -19,51 +19,57 @@ export class PolicyEditor {
     }
 
 
+    /**
+     * Function to insert an action rule for each permission in the provided array. They will be inserted in a new policy, via POST and not PATCH.
+     */
     public async insertActionRule(targetId: string, actions: Permission[], assignee: string = ""): Promise<void> {
         const webId = getDefaultSession().info.webId!
 
         const policyId: string = `http://example.org/policy${this.getRandomString(20)}`;
 
-        // We need a proper way to create new rules, probably better server side?
-        const ruleId = `http://example.org/rule${this.getRandomString(20)}`;
+        for (const action of actions) {
+            // We need a proper way to create new rules, probably better server side?
+            const ruleId = `http://example.org/rule${this.getRandomString(20)}`;
 
-        // Define the new triples in the rule
-        const actionTriples = actions.map(action => `odrl:action odrl:${action.toLowerCase()} ;`).join("\n");
-        const assigneeTriple = assignee
-            ? `odrl:assignee <${assignee}> ;`
-            : "";
+            // Define the new triples in the rule
+            const actionTriple = `odrl:action odrl:${action.toLowerCase()} ;`;
+            const assigneeTriple = assignee
+                ? `odrl:assignee <${assignee}> ;`
+                : "";
 
-        // The response contains the full and updated version of the policy, which we cannot return in this interface
-        const response = await fetch(UMA_URL(/*`/${encodeURIComponent(policyId)}`*/), {
-            method: 'POST',
-            headers: {
-                'Authorization': webId,
-                'Content-type': 'text/turtle'
-                // 'Content-type': 'application/sparql-update'
-            },
-            // We need to make sure there's no way to have any injection...
-            body: `@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+            // The response contains the full and updated version of the policy, which we cannot return in this interface
+            const response = await fetch(UMA_URL(/*`/${encodeURIComponent(policyId)}`*/), {
+                method: 'POST',
+                headers: {
+                    'Authorization': webId,
+                    'Content-type': 'text/turtle'
+                    // 'Content-type': 'application/sparql-update'
+                },
+                // We need to make sure there's no way to have any injection...
+                body: `@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
 
-<${policyId}> odrl:permission <${ruleId}> .
+<${policyId}> a odrl:Agreement ;
+    odrl:permission <${ruleId}> .
 
 <${ruleId}> a odrl:Permission ;
     odrl:target <${targetId}> ;
-    ${actionTriples}
+    ${actionTriple}
     ${assigneeTriple}
     odrl:assigner <${webId}> .
 `
-            // PATCH way of doing this
-            //                 `PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
-            // INSERT {
-            //     <${policyId}> odrl:permission <${ruleId}> .
-            //     <${ruleId}> a odrl:Permission ;
-            //             odrl:assigner <${webId}> ;
-            //             odrl:target <${targetId}> .
-            //     ${actionTriples}
-            //     ${assigneeTriple}
-            // }
-            // WHERE {}`
-        })
+                // PATCH way of doing this
+                //                 `PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
+                // INSERT {
+                //     <${policyId}> odrl:permission <${ruleId}> .
+                //     <${ruleId}> a odrl:Permission ;
+                //             odrl:assigner <${webId}> ;
+                //             odrl:target <${targetId}> .
+                //     ${actionTriples}
+                //     ${assigneeTriple}
+                // }
+                // WHERE {}`
+            })
+        }
     }
 
     /**
@@ -110,9 +116,9 @@ export class PolicyEditor {
 
                 console.log(policyId)
 
-                // Since the policy has this target, and every policy has only one rule with one target, we need to look at the assignee
+                // We now have the policies that have our target, check if our assignee has an action to delete here
                 if (assignee === "") {
-                    // If this rule does not have an assignee and it has an action to be deleted, select it
+                    // If no assignee specified, the rule is public and it has an action to be deleted, select it
                     if (store.getQuads(rule, ODRL("assignee"), null, null).length === 0) {
                         for (const action of actions)
                             if (store.getQuads(rule, ODRL("action"), ODRL(action.toLowerCase()), null).length > 0)
@@ -132,25 +138,41 @@ export class PolicyEditor {
             }
         )
 
-
-
-
-        // 4: Delete the entire policy if rule matches
+        // 4: Delete the rule that has the matching target and permission for the matching assignee
         for (const policyId of policyIds) {
-            const deleteResponse = await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
-                method: "DELETE",
-                headers: {
-                    Authorization: webId
-                }
-            });
+            for (const action of actions) {
+                const deleteResponse = await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
+                    method: "PATCH",
+                    headers: {
+                        'Authorization': webId,
+                        'Content-type': 'application/sparql-update',
+                    },
+                    body: `
+    PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
 
-            if (!deleteResponse.ok) {
-                throw new Error(`Policy deletion failed: ${deleteResponse.status}`);
+    DELETE {
+    ?rule ?p ?o .
+    <${policyId}> odrl:permission ?rule .
+    }
+    WHERE {
+    ?rule odrl:action odrl:${action.toLowerCase()} .
+    ?rule odrl:assigner <${webId}> .
+    ?rule odrl:target <${targetId}> .
+
+    ${assignee
+                            ? `?rule odrl:assignee <${assignee}> .`
+                            : `FILTER NOT EXISTS { ?rule odrl:assignee ?anyAssignee . }`}
+
+    ?policy odrl:permission ?rule .
+    }
+
+                    `
+                });
+
+                if (!deleteResponse.ok) {
+                    throw new Error(`Policy deletion failed: ${deleteResponse.status}`);
+                }
             }
         }
     }
-
-
-
-
 }

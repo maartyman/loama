@@ -3,7 +3,6 @@ import { BaseSubject, Index, IndexItem, Permission, ResourcePermissions, Resourc
 import { IAccessRequest, IController, IInboxConstructor, IStore, IStoreConstructor, SubjectConfig, SubjectConfigs, SubjectKey, SubjectType } from "../types/modules";
 import { AccessRequest } from "./accessRequests/AccessRequest";
 import { InruptAccessRequest } from "./accessRequests/InruptAccessRequest";
-import { WebIdManager } from "./permissionManager/inrupt";
 import { Mutex } from "./utils/Mutex";
 
 export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>> extends Mutex implements IController<T> {
@@ -57,46 +56,6 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
     private async updateItem<K extends SubjectKey<T>>(resourceUrl: string, subject: SubjectType<T, K>, permissions: Permission[], alwaysKeepItem = false) {
         console.log('Controller.updateItem called');
         console.log('Arguments:', { resourceUrl, subject, permissions, alwaysKeepItem });
-        // let item = await this.getItem(resourceUrl, subject);
-        // const { manager } = this.getSubjectConfig(subject)
-
-        // if (item) {
-        //     await manager.editPermissions(resourceUrl, item, subject, permissions);
-        // } else {
-        //     await manager.createPermissions(resourceUrl, subject, permissions);
-
-        //     item = {
-        //         id: crypto.randomUUID(),
-        //         requestId: crypto.randomUUID(),
-        //         isEnabled: true,
-        //         permissions: permissions,
-        //         resource: resourceUrl,
-        //         subject: subject,
-        //     }
-
-        //     const index = await this.index.getCurrent();
-        //     index.items.push(item);
-        // }
-
-        // if (!alwaysKeepItem && permissions.length === 0 && manager.shouldDeleteOnAllRevoked()) {
-        //     const index = await this.index.getCurrent();
-        //     const idx = index.items.findIndex(i => i.id === item.id);
-        //     index.items.splice(idx, 1);
-        // } else {
-        //     item.permissions = permissions;
-
-        //     // The SOLID server OR the SDK does not directly push the update to the acl files for some reason
-        //     // Here we give it some time to save/push the changes
-        //     await new Promise(res => setTimeout(res, 500));
-        //     // extra check what the ACL currently has stored as info. Will decrease the chance of the index going out of sync with the ACL file
-        //     const remotePermissions = await this.getExistingRemotePermissions(resourceUrl, subject);
-        //     if (remotePermissions !== permissions) {
-        //         console.debug("Permissions in index are out of sync with remote, updating index...", subject);
-        //         item.permissions = remotePermissions;
-        //     }
-        // }
-
-        // await this.index.saveToRemote();
     }
 
     AccessRequest(): IAccessRequest {
@@ -155,7 +114,7 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
 
             // 2. Let the manager add the permission, return the updated version
             const webId = getDefaultSession().info.webId!;
-            const permissions = await this.getSubjectConfig(subject).manager.getTargetPermissionsForUser(webId, subject.selector!.url, resourceUrl);
+            const permissions = await this.getSubjectConfig(subject).manager.getTargetPermissionsForUser(webId, subject.selector?.url ?? "", resourceUrl);
 
             // if (permissions.indexOf(addedPermission) !== -1) {
             //     console.error("Permission already granted")
