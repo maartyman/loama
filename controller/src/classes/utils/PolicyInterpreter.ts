@@ -36,7 +36,7 @@ export class PolicyInterpreter {
      * Function that returns the stored Target objects without sanitization
      * This function assumes all policies are correct, and only contains information for the logged on client
      * 
-     * Currently, it does not check the rule type (permission, prohibition, duty) and it assumes permission
+     * Currently, it does not check the rule type (permission, prohibition, duty) and it only takes permission into account
      * @param store the owned policies in a store
      * @returns the target -> subjects -> permissions relation for all owned targets
      */

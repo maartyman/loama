@@ -74,7 +74,7 @@ export class PolicyEditor {
 
     /**
      * Funcion that searches every owned rule by the logged on client, finds the target 
-     * of an assigner and deletese the actions on it
+     * of an assigner and deletes the actions on it
      */
     public async deleteActionRule(targetId: string, actions: Permission[], assignee: string = ""): Promise<void> {
         const session = getDefaultSession();
