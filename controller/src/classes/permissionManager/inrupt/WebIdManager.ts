@@ -3,8 +3,6 @@ import { IPermissionManager, SubjectKey } from "../../../types/modules";
 import { InruptPermissionManager } from "./InruptPermissionManager";
 import { PolicyEditor } from "../../../classes/utils/PolicyEditor";
 
-// Temporal
-
 export class WebIdManager<T extends Record<keyof T, BaseSubject<keyof T & string>>> extends InruptPermissionManager<T> implements IPermissionManager<T> {
 
     // Create an action for this resource and this subject with the given permissions

@@ -140,12 +140,12 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         if (!webId) {
             throw new Error("User not logged in");
         }
+
+        // Retrieve our policies
         const store = await this.fetchPolicies(webId)
 
-        // Use parser to extract an N3 Store
+        // Get detailed info about the target
         const interpreter = new PolicyInterpreter();
-
-        // Parse to SubjectPermissions
         const target: TargetSubjects = interpreter.permissionsForOneResource(resourceUrl, store);
 
         if (target) {
@@ -167,7 +167,7 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
                     type: "public",
                 } as unknown as T[K],
                 permissions: Array.from(target.public.permissions),
-                isEnabled: true, // Not yet implemented
+                isEnabled: true, // Not yet implemented, there is no odrl equivalent?
                 targetId: target.targetUrl
             })
 
@@ -178,7 +178,7 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
                     selector: { url: subject.subject }
                 } as unknown as T[K],
                 permissions: Array.from(subject.permissions),
-                isEnabled: true, // Not yet implemented
+                isEnabled: true, // Not yet implemented, there is no odrl equivalent?
                 targetId: target.targetUrl
             }))
             return subjectPermissions;

@@ -46,9 +46,25 @@ This is a lot of work, because the UMA server is very policy-oriented. We first 
 
 2. When every rule is deleted from a policy, the current implementation can still contain some 'dangling triples'. These are triples that contain information about a policy that does not have any rules anymore. This can be fixed by an extra step. After the deletion of every permission rule, we could GET every policy again, and look if there are any rules left in there. If not, we could DELETE the policy. This is also some work, so we are currently looking for better solutions.
 
+3. Although it seems quite impossible, things like sparql-injection might need more attention
+
+
 ### Managers
 
-The main managers are the `InruptPermissionManager`, the `WebIdManager` and the `PublicManager`. More as discussed later
+The main managers are the `InruptPermissionManager`, the `WebIdManager` and the `PublicManager`. They contain the logic to perform the clientside operations on the policies.
+
+#### InruptPermissionManager
+This manager handles the functions that have the same implementation for underlaying managers. The methods in this manager are the following:
+- `fetchPolicies`: Retrieve every policy that you own, and turn it into an N3 store.
+- `fetchOnePolicy`: Retrieve one specific policy as an N3 store.
+- `getContainerPermissionList`: Get every target where you are the assigner of its policy. Since we need every target, independent of the subject, it could be placed here.
+
+There are also functions here where it would make more sense to move them to their specific subject manager.
+- `getRemotePermissions`: Get the permissions for one single target. We do retrieve the information in a way that we get every subject, but we need to handle those subjects in the common managers. This means adding a new subject would require changes in the common manager, which would be cleaner if moved to the separate managers.
+- `getTargetPermissionsForUser`: A specific version of getRemotePermissions, where we are only interested in the permissions for one user on one target. This must be moved to the underlaying managers.
+
+#### Underlaying Managers
+Because most of the work is done in the `PolicyEditor` and `PolicyInterpreter`, there is no big implementation in the managers. The `createPermissions` and `deletePermissions` functions are one-liners, and the `editPermissions` is not actually needed in this implementation. 
 
 ### Controller
 
