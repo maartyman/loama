@@ -30,7 +30,6 @@ export class PolicyService {
 
         // Extract the target Ids
         const turtleText = await response.text();
-        console.log("Retrieved Turtle:", turtleText);
 
         // Use parser to extract an N3 Store
         const parser = new PolicyParser();
@@ -161,7 +160,6 @@ export class PolicyService {
                     // Do the same, with a check if the assignee is correct
                     if (store.getQuads(rule, ODRL("assignee"), namedNode(assignee), null).length >= 1) {
                         for (const action of actions) {
-                            console.log(new Writer().quadsToString(store.getQuads(rule, ODRL("action"), ODRL(action.toLowerCase()), null)))
                             if (store.getQuads(rule, ODRL("action"), ODRL(action.toLowerCase()), null).length > 0) {
                                 if (!policyIds.has(policyId)) policyIds.set(policyId, new Set<Permission>());
                                 policyIds.get(policyId)!.add(action);
@@ -172,8 +170,6 @@ export class PolicyService {
                 }
             }
         )
-
-        console.log("The policies we found are...", ...policyIds)
 
         // 4: Delete the rule that has the matching target and permission for the matching assignee
         for (const policyId of policyIds.keys()) {
@@ -209,8 +205,6 @@ export class PolicyService {
                 if (!deleteResponse.ok) {
                     throw new Error(`Policy deletion failed: ${deleteResponse.status}`);
                 }
-
-                console.log(await deleteResponse.text())
             }
         }
     }

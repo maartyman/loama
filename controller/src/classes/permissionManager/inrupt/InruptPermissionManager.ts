@@ -98,7 +98,6 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         // Extract our webID
         const session = getDefaultSession();
         const webId = session.info.webId;
-        console.log("webId", webId, resourceUrl)
 
         // We must be logged on
         if (!webId) {
@@ -107,13 +106,11 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
 
         // Retrieve our policies
         const store = await new PolicyService().fetchPolicies(webId);
-        console.log("These are the permissions after the deletion!!! (probably")
 
         // Get detailed info about the target
         const interpreter = new PolicyInterpreter();
         const target: TargetSubjects = interpreter.permissionsForOneResource(resourceUrl, store);
 
-        console.log('target info after retrieving', target)
 
         if (target) {
             const subjectPermissions: SubjectPermissions<T[K]>[] = [];
@@ -161,7 +158,6 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         // Extract our webID
         const session = getDefaultSession();
         const webId = session.info.webId;
-        console.log("webId", webId)
 
         // We must be logged on
         if (!webId) {
@@ -174,7 +170,6 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         const targetUrls = Array.from(new Set(store.getQuads(null, ODRL('target'), null, null).map(q => q.object.id)));
         const resourcePermissions: ResourcePermissions<T[keyof T]>[] = []
         for (const targetUrl of targetUrls) {
-            console.log(targetUrl)
             const perms = await this.getRemotePermissions(targetUrl);
             resourcePermissions.push({
                 resourceUrl: targetUrl,

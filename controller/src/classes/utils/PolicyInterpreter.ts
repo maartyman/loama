@@ -71,7 +71,6 @@ export class PolicyInterpreter {
             for (const quad of ruleStore.getQuads(null, ODRL('action'), null, null)) {
                 // TODO: find a way to categorize all actions as one of the Permission types 
                 const action = this.fromODRL(quad.object.id).toLowerCase();
-                console.log('action', action)
 
                 switch (action) {
                     case "read":
@@ -144,12 +143,8 @@ export class PolicyInterpreter {
     public permissionsForOneResource(resourceUrl: string, store: Store): TargetSubjects {
         const targets = this.ownedPoliciesToObject(store, resourceUrl);
 
-        console.log('targets before', targets)
-
         // Only return the target we need
         const target = targets.filter(t => t.targetUrl === resourceUrl);
-
-        console.log('target', target)
 
         if (target.length > 1) console.warn("Something went wrong while getting the permissions for", resourceUrl);
         // Handle empty subjects
