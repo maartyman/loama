@@ -52,6 +52,29 @@ export class PolicyService {
         return parser.parseText(turtleText);
     }
 
+    public async postPolicy(webId: string, body: string) {
+        await fetch(UMA_URL(), {
+            method: 'POST',
+            headers: {
+                'Authorization': webId,
+                'Content-type': 'text/turtle'
+                // 'Content-type': 'application/sparql-update'
+            },
+            body: body
+        })
+    }
+
+    public async patchPolicy(webId: string, policyId: string, body: string) {
+        await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
+            method: 'PATCH',
+            headers: {
+                'Authorization': webId,
+                'Content-type': 'application/sparql-update'
+            },
+            body: body
+        })
+    }
+
 
     /**
      * Function to insert an action rule for each permission in the provided array. They will be inserted in a new policy, via POST and not PATCH.
@@ -59,10 +82,27 @@ export class PolicyService {
     public async insertActionRule(targetId: string, actions: Permission[], assignee: string = ""): Promise<void> {
         const webId = getDefaultSession().info.webId!
 
-        const policyId: string = `http://example.org/policy${this.getRandomString(20)}`;
+        // Find out if this target already has a policy
+        const store = (await this.fetchPolicies(webId));
+        const ruleIds = store.getQuads(null, ODRL('target'), namedNode(targetId), null).map(quad => quad.subject);
+        const policyIds = new Set<string>();
+        ruleIds.forEach(ruleId =>
+            // We also only take permission into account (for now)
+            store.getQuads(null, ODRL('permission'), ruleId, null).forEach(quad =>
+                // Add each policyId
+                policyIds.add(quad.subject.id)
+            )
+        )
+
+        // Our policyId is either one from the set or a random generator if there are none, this is not verified to be unique, but 20^62 possibilities should work for now
+        // Since we found this target, it implicitly means that there must exist a policy and thus we will never create a random one...
+        const policyId: string = policyIds.size > 0
+            ? [...policyIds][0]
+            : `http://example.org/policy${this.getRandomString(20)}`;
+
 
         for (const action of actions) {
-            // We need a proper way to create new rules, probably better server side?
+            // We need a proper way to create new rules, probably better server side? 
             const ruleId = `http://example.org/rule${this.getRandomString(20)}`;
 
             // Define the new triples in the rule
@@ -72,15 +112,19 @@ export class PolicyService {
                 : "";
 
             // The response contains the full and updated version of the policy, which we cannot return in this interface
-            const response = await fetch(UMA_URL(/*`/${encodeURIComponent(policyId)}`*/), {
-                method: 'POST',
-                headers: {
-                    'Authorization': webId,
-                    'Content-type': 'text/turtle'
-                    // 'Content-type': 'application/sparql-update'
-                },
-                // We need to make sure there's no way to have any injection...
-                body: `@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+            // If there already exists a policy for this target, patch this rule into it. Otherwise, just post a new one
+            const response = policyIds.size > 0
+                ? this.patchPolicy(webId, policyId, `PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
+INSERT {
+    <${policyId}> odrl:permission <${ruleId}> .
+    <${ruleId}> a odrl:Permission ;
+        odrl:target <${targetId}> ;
+        ${actionTriple}
+        ${assigneeTriple}
+        odrl:assigner <${webId}> .
+}
+WHERE {}`)
+                : this.postPolicy(webId, `@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
 
 <${policyId}> a odrl:Agreement ;
     odrl:permission <${ruleId}> .
@@ -90,19 +134,7 @@ export class PolicyService {
     ${actionTriple}
     ${assigneeTriple}
     odrl:assigner <${webId}> .
-`
-                // PATCH way of doing this
-                //                 `PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
-                // INSERT {
-                //     <${policyId}> odrl:permission <${ruleId}> .
-                //     <${ruleId}> a odrl:Permission ;
-                //             odrl:assigner <${webId}> ;
-                //             odrl:target <${targetId}> .
-                //     ${actionTriples}
-                //     ${assigneeTriple}
-                // }
-                // WHERE {}`
-            })
+`)
         }
     }
 
