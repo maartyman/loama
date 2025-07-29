@@ -1,11 +1,11 @@
 import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
-import { Permission } from "../../types/";
-import { UMA_URL } from "../permissionManager/inrupt";
+import { Permission } from "../../types";
 import { ODRL, PolicyParser } from "./PolicyParser";
 import { DataFactory, Writer } from "n3"
 const { namedNode } = DataFactory
+export const UMA_URL = (encodedId: string = "") => `http://localhost:4000/uma/policies${encodedId}`
 
-export class PolicyEditor {
+export class PolicyService {
     constructor() { }
 
     private getRandomString(length: number): string {
@@ -16,6 +16,41 @@ export class PolicyEditor {
             result += chars[randIndex];
         }
         return result;
+    }
+
+    public async fetchPolicies(webId: string) {
+
+        // Get all our policies
+        const response = await fetch(UMA_URL(), {
+            headers: {
+                "Authorization": webId,
+                "Accept": "text/turtle"
+            }
+        });
+
+        // Extract the target Ids
+        const turtleText = await response.text();
+        console.log("Retrieved Turtle:", turtleText);
+
+        // Use parser to extract an N3 Store
+        const parser = new PolicyParser();
+        return parser.parseText(turtleText);
+    }
+
+    public async fetchOnePolicy(webId: string, policyId: string) {
+        // Get all our policies
+        const response = await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
+            headers: {
+                "Authorization": webId,
+                "Accept": "text/turtle"
+            }
+        });
+
+        const turtleText = await response.text();
+
+        // Use parser to extract an N3 Store
+        const parser = new PolicyParser();
+        return parser.parseText(turtleText);
     }
 
 
@@ -101,36 +136,36 @@ export class PolicyEditor {
         // 3: Find all rules with our target
         const targetRules = store.getQuads(null, ODRL("target"), namedNode(targetId), null);
 
-        const policyIds = new Set<string>();
+        const policyIds = new Map<string, Set<Permission>>();
         targetRules.forEach(
             // Filter only the targets that have rules with us as assignee, or public if no assignee
             target => {
                 // Search the rule of the target, and then the policy of the rule, only for permission (for now)
-                console.log("target to be checked: ", target)
                 const rule = target.subject;
-                console.log("rule to be checked: ", rule.id)
                 const matches = store.getQuads(null, ODRL("permission"), rule, null);
                 if (matches.length === 0)
                     console.warn("out of bounds rule");
                 const policyId = matches[0].subject.id;
-
-                console.log(policyId)
 
                 // We now have the policies that have our target, check if our assignee has an action to delete here
                 if (assignee === "") {
                     // If no assignee specified, the rule is public and it has an action to be deleted, select it
                     if (store.getQuads(rule, ODRL("assignee"), null, null).length === 0) {
                         for (const action of actions)
-                            if (store.getQuads(rule, ODRL("action"), ODRL(action.toLowerCase()), null).length > 0)
-                                policyIds.add(policyId)
+                            if (store.getQuads(rule, ODRL("action"), ODRL(action.toLowerCase()), null).length > 0) {
+                                if (!policyIds.has(policyId)) policyIds.set(policyId, new Set<Permission>());
+                                policyIds.get(policyId)!.add(action);
+                            }
                     }
                 } else {
                     // Do the same, with a check if the assignee is correct
                     if (store.getQuads(rule, ODRL("assignee"), namedNode(assignee), null).length >= 1) {
                         for (const action of actions) {
                             console.log(new Writer().quadsToString(store.getQuads(rule, ODRL("action"), ODRL(action.toLowerCase()), null)))
-                            if (store.getQuads(rule, ODRL("action"), ODRL(action.toLowerCase()), null).length > 0)
-                                policyIds.add(policyId)
+                            if (store.getQuads(rule, ODRL("action"), ODRL(action.toLowerCase()), null).length > 0) {
+                                if (!policyIds.has(policyId)) policyIds.set(policyId, new Set<Permission>());
+                                policyIds.get(policyId)!.add(action);
+                            }
                         }
 
                     }
@@ -138,9 +173,11 @@ export class PolicyEditor {
             }
         )
 
+        console.log("The policies we found are...", ...policyIds)
+
         // 4: Delete the rule that has the matching target and permission for the matching assignee
-        for (const policyId of policyIds) {
-            for (const action of actions) {
+        for (const policyId of policyIds.keys()) {
+            for (const action of policyIds.get(policyId)!) {
                 const deleteResponse = await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
                     method: "PATCH",
                     headers: {
@@ -172,6 +209,8 @@ export class PolicyEditor {
                 if (!deleteResponse.ok) {
                     throw new Error(`Policy deletion failed: ${deleteResponse.status}`);
                 }
+
+                console.log(await deleteResponse.text())
             }
         }
     }

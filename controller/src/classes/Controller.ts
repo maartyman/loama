@@ -22,8 +22,6 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
     }
 
     private getSubjectConfig<K extends SubjectKey<T>>(subject: T[K]): SubjectConfig<T, T[K]> {
-        console.log('Controller.getSubjectConfig called');
-        console.log('Arguments:', { subject });
         const subjectConfig = this.subjectConfigs[subject.type];
         if (!subjectConfig) {
             throw new Error(`No config found for subject type ${subject.type}`);
@@ -31,81 +29,48 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
         return subjectConfig as SubjectConfig<T, T[K]>
     }
 
-    private async getExistingRemotePermissions<K extends SubjectKey<T>>(resourceUrl: string, subject: T[K]): Promise<Permission[]> {
-        console.log('Controller.getExistingRemotePermissions called');
-        console.log('Arguments:', { resourceUrl, subject });
-        const subjectConfig = this.getSubjectConfig(subject)
-        const subjects = await subjectConfig.manager.getRemotePermissions<K>(resourceUrl);
-        const subjectPermission = subjects.find(entry => subjectConfig.resolver.checkMatch(entry.subject, subject))
-
-        return [...subjectPermission?.permissions ?? []]
-    }
-
-
-    private async getExistingPermissions<K extends SubjectKey<T>>(resourceUrl: string, subject: T[K]): Promise<Permission[]> {
-        console.log('Controller.getExistingPermissions called');
-        console.log('Arguments:', { resourceUrl, subject });
-        const item = await this.getItem(resourceUrl, subject);
-        if (item) {
-            // Making sure the array is not a reference to the one stored in the index
-            return [...item.permissions]
-        }
-        return this.getExistingRemotePermissions(resourceUrl, subject);
-    }
-
     private async updateItem<K extends SubjectKey<T>>(resourceUrl: string, subject: SubjectType<T, K>, permissions: Permission[], alwaysKeepItem = false) {
-        console.log('Controller.updateItem called');
-        console.log('Arguments:', { resourceUrl, subject, permissions, alwaysKeepItem });
     }
 
     AccessRequest(): IAccessRequest {
-        console.log('Controller.AccessRequest called');
-        console.log('Arguments:', {});
         return this.accessRequest;
     }
 
     async setPodUrl(podUrl: string) {
-        console.log('Controller.setPodUrl called');
-        console.log('Arguments:', { podUrl });
-        // this.index.setPodUrl(podUrl);
-        // this.resources.setPodUrl(podUrl);
-        // await this.accessRequest.setPodUrl(podUrl)
     }
 
     unsetPodUrl() {
-        console.log('Controller.unsetPodUrl called');
-        console.log('Arguments:', {});
-        // this.index.unsetPodUrl();
-        // this.resources.unsetPodUrl();
-        // this.accessRequest.unsetPodUrl();
     }
 
     async getOrCreateIndex() {
-        console.log('Controller.getOrCreateIndex called');
-        console.log('Arguments:', {});
-        // return this.index.getOrCreate();
         return { id: "", items: [] }
     }
 
     getLabelForSubject<K extends SubjectKey<T>>(subject: T[K]): string {
-        console.log('Controller.getLabelForSubject called');
-        console.log('Arguments:', { subject });
         const { resolver } = this.getSubjectConfig(subject);
         return resolver.toLabel(subject);
     }
 
+    /**
+     * Assemble the information for a subject in a resource
+     * @returns 
+     */
     async getItem<K extends SubjectKey<T>>(resourceUrl: string, subject: SubjectType<T, K>): Promise<IndexItem<T[K]> | undefined> {
-        console.log('Controller.getItem called');
-        console.log('Arguments:', { resourceUrl, subject });
-        // const { resolver } = this.getSubjectConfig<K>(subject);
-
-        // const index = await this.index.getCurrent() as Index<T[K]>;
-        // return resolver.getItem(index, resourceUrl, subject.selector)
-        return {} as IndexItem<T[K]>
+        const subjectConfig = this.getSubjectConfig(subject)
+        const subjects = await subjectConfig.manager.getRemotePermissions<K>(resourceUrl);
+        const subjectPermission = subjects.find(entry => subjectConfig.resolver.checkMatch(entry.subject, subject))
+        if (!subjectPermission) return undefined
+        return {
+            id: "string",
+            requestId: "string",
+            isEnabled: subjectPermission.isEnabled,
+            permissions: [...subjectPermission.permissions ?? []],
+            resource: resourceUrl,
+            subject: subject,
+        } as IndexItem<T[K]>
     }
 
     async addPermission<K extends SubjectKey<T>>(resourceUrl: string, addedPermission: Permission, subject: SubjectType<T, K>) {
-        console.log("add permission with: ", { resourceUrl, addedPermission, subject })
         const release = await this.acquire();
         try {
 
@@ -116,15 +81,7 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
             const webId = getDefaultSession().info.webId!;
             const permissions = await this.getSubjectConfig(subject).manager.getTargetPermissionsForUser(webId, subject.selector?.url ?? "", resourceUrl);
 
-            // if (permissions.indexOf(addedPermission) !== -1) {
-            //     console.error("Permission already granted")
-            //     return permissions;
-            // }
-
-            // permissions.push(addedPermission)
-
-            // await this.updateItem(resourceUrl, subject, permissions)
-            return permissions; //Promise[]
+            return permissions;
         } catch (e) {
             throw e;
         } finally {
@@ -133,32 +90,17 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
     }
 
     async removeSubject<K extends SubjectKey<T>>(resourceUrl: string, subject: SubjectType<T, K>) {
-        console.log('Controller.removeSubject called');
-        console.log('Arguments:', { resourceUrl, subject });
-        await this.updateItem(resourceUrl, subject, []);
-
         const subjectConfig = this.getSubjectConfig(subject);
-        const index = await this.index.getCurrent() as Index<T[K]>;
+        const item = await this.getItem(resourceUrl, subject);
 
-        const item = subjectConfig.resolver.getItem(index, resourceUrl, subject.selector);
-        if (!item) return;
-
-        await subjectConfig.manager.deletePermissions(resourceUrl, subject, []);
-
-        const idx = index.items.findIndex(i => subjectConfig.resolver.checkMatch(i.subject, subject));
-        index.items.splice(idx, 1);
-
-        await this.index.saveToRemote();
+        await subjectConfig.manager.deletePermissions(resourceUrl, subject, item?.permissions ?? []);
     }
 
     async removePermission<K extends SubjectKey<T>>(resourceUrl: string, removedPermission: Permission, subject: SubjectType<T, K>) {
-        console.log('Controller.removePermission called');
-        console.log('Arguments:', { resourceUrl, removedPermission, subject });
         const release = await this.acquire()
         try {
 
             // 1. Delete a permission for the subject
-            console.log("were here", removedPermission, subject)
             await this.getSubjectConfig(subject).manager.deletePermissions(resourceUrl, subject, [removedPermission]);
 
             // 2. Let the manager delete the permission, return the updated version
@@ -175,71 +117,29 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
     }
 
     async enablePermissions<K extends SubjectKey<T>>(resource: string, subject: SubjectType<T, K>) {
-        console.log('Controller.enablePermissions called');
-        console.log('Arguments:', { resource, subject });
-        let item = await this.getItem(resource, subject);
-        if (!item) {
-            // This point should never be reached
-            throw new Error("Item not found to enable permissions from")
-        }
-
-        const { manager } = this.getSubjectConfig(subject)
-        await manager.createPermissions(resource, subject, item.permissions);
-
-        item.isEnabled = true;
-        await this.index.saveToRemote()
+        // won't fix
     }
 
     async disablePermissions<K extends SubjectKey<T>>(resourceUrl: string, subject: SubjectType<T, K>) {
-        console.log('Controller.disablePermissions called');
-        console.log('Arguments:', { resourceUrl, subject });
-        let item = await this.getItem(resourceUrl, subject);
-        if (!item) {
-            throw new Error("Item not found to disable permissions from")
-        }
-
-        const { manager } = this.getSubjectConfig(subject)
-        await manager.editPermissions(resourceUrl, item, subject, []);
-
-        item.isEnabled = false;
-
-        await this.index.saveToRemote()
+        // won't fix
     }
 
     async getContainerPermissionList(containerUrl: string): Promise<ResourcePermissions<T[keyof T]>[]> {
-        console.log('Controller.getContainerPermissionList called');
-        console.log('Arguments:', { containerUrl });
-
-        // Use the subjectConfigs to get permissions for the container
-        // For each subjectConfig, call its manager.getRemotePermissions for the containerUrl
-
-        // Eventually, we would only need to use the webIDManager...
-        const configs: SubjectConfig<T>[] = Object.values(this.subjectConfigs);
-        console.log(configs)
-        const results = await Promise.all(
-            configs.filter(c => c.manager.type === "webId").map(c => c.manager.getContainerPermissionList(containerUrl)));
-
-        return results.flat()
+        return this.getSubjectConfig({ type: "public" } as T[SubjectKey<T>]).manager.getContainerPermissionList(containerUrl);
     }
 
     // NOTE: Do we want to force this to only use the index stored in the store?
     async getResourcePermissionList(resourceUrl: string): Promise<ResourcePermissions<T[keyof T]>> {
-        const configs: SubjectConfig<T>[] = Object.values(this.subjectConfigs);
-        console.log(configs)
-        const results = await Promise.all(
-            configs.filter(c => c.manager.type === 'webId').map(c => c.manager.getRemotePermissions(resourceUrl))
-        );
+        const result = await this.getSubjectConfig({ type: "public" } as T[SubjectKey<T>]).manager.getRemotePermissions(resourceUrl);
 
         return {
             resourceUrl,
             canRequestAccess: true, // TODO
-            permissionsPerSubject: results.flat()
+            permissionsPerSubject: result
         };
     }
 
     isSubjectSupported<K extends string, B extends BaseSubject<K>>(subject: BaseSubject<K>): IController<Record<K, B>> {
-        console.log('Controller.isSubjectSupported called');
-        console.log('Arguments:', { subject });
         if (!this.subjectConfigs[subject.type as unknown as keyof T]) {
 
             throw new Error(`Subject type ${subject.type} is not supported`);

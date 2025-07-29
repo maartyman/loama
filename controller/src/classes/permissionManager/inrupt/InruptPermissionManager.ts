@@ -2,8 +2,9 @@ import { Access, AccessModes, getSolidDataset, getThingAll } from "@inrupt/solid
 import { SubjectPermissions, BaseSubject, IndexItem, Permission, ResourcePermissions } from "../../../types";
 import { SubjectKey, TargetSubjects } from "../../../types/modules";
 import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
-import { ODRL, PolicyParser } from "../../../classes/utils/PolicyParser";
+import { ODRL } from "../../../classes/utils/PolicyParser";
 import { PolicyInterpreter } from "../../../classes/utils/PolicyInterpreter";
+import { PolicyService } from "../../../classes/utils/PolicyService";
 import { Store } from 'n3';
 
 const ACCESS_MODES_TO_PERMISSION_MAPPING: Record<keyof (AccessModes & Access), Permission> = {
@@ -14,8 +15,6 @@ const ACCESS_MODES_TO_PERMISSION_MAPPING: Record<keyof (AccessModes & Access), P
     controlRead: Permission.Control,
     controlWrite: Permission.Control,
 }
-
-export const UMA_URL = (encodedId: string = "") => `http://localhost:4000/uma/policies${encodedId}`
 
 /**
  * A permission manager implementation using the inrupt sdk to actually update the ACL
@@ -79,48 +78,13 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         return accessModes;
     }
 
-    protected async fetchPolicies(webId: string) {
-
-        // Get all our policies
-        const response = await fetch(UMA_URL(), {
-            headers: {
-                "Authorization": webId,
-                "Accept": "text/turtle"
-            }
-        });
-
-        // Extract the target Ids
-        const turtleText = await response.text();
-        console.log("Retrieved Turtle:", turtleText);
-
-        // Use parser to extract an N3 Store
-        const parser = new PolicyParser();
-        return parser.parseText(turtleText);
-    }
-
-    protected async fetchOnePolicy(webId: string, policyId: string) {
-        // Get all our policies
-        const response = await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
-            headers: {
-                "Authorization": webId,
-                "Accept": "text/turtle"
-            }
-        });
-
-        const turtleText = await response.text();
-
-        // Use parser to extract an N3 Store
-        const parser = new PolicyParser();
-        return parser.parseText(turtleText);
-    }
-
     /**
      * Function to specifically get the permission list for an assignee on a certain target
      * 
      * TODO: split in subject
      */
     public async getTargetPermissionsForUser(assignerId: string, assigneeId: string, targetId: string): Promise<Permission[]> {
-        const store: Store = await this.fetchPolicies(assignerId);
+        const store: Store = await new PolicyService().fetchPolicies(assignerId);
         const target: TargetSubjects = new PolicyInterpreter().permissionsForOneResource(targetId, store);
 
         // If there are no private permissions, or no private permissions for the assignee, return the public ones (or nothing if they don't exist)
@@ -142,11 +106,14 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         }
 
         // Retrieve our policies
-        const store = await this.fetchPolicies(webId)
+        const store = await new PolicyService().fetchPolicies(webId);
+        console.log("These are the permissions after the deletion!!! (probably")
 
         // Get detailed info about the target
         const interpreter = new PolicyInterpreter();
         const target: TargetSubjects = interpreter.permissionsForOneResource(resourceUrl, store);
+
+        console.log('target info after retrieving', target)
 
         if (target) {
             const subjectPermissions: SubjectPermissions<T[K]>[] = [];
@@ -162,7 +129,7 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
             })
 
             // Add the public information
-            if (target.public) subjectPermissions.push({
+            if (target.public && target.public.permissions.size > 0) subjectPermissions.push({
                 subject: {
                     type: "public",
                 } as unknown as T[K],
@@ -172,15 +139,17 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
             })
 
             // Add the private subjects
-            if (target.private) target.private.forEach(subject => subjectPermissions.push({
-                subject: {
-                    type: "webId",
-                    selector: { url: subject.subject }
-                } as unknown as T[K],
-                permissions: Array.from(subject.permissions),
-                isEnabled: true, // Not yet implemented, there is no odrl equivalent?
-                targetId: target.targetUrl
-            }))
+            if (target.private) target.private.forEach(subject => {
+                if (subject.permissions.size > 0) subjectPermissions.push({
+                    subject: {
+                        type: "webId",
+                        selector: { url: subject.subject }
+                    } as unknown as T[K],
+                    permissions: Array.from(subject.permissions),
+                    isEnabled: true, // Not yet implemented, there is no odrl equivalent?
+                    targetId: target.targetUrl
+                })
+            })
             return subjectPermissions;
         }
 
@@ -199,7 +168,7 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
             throw new Error("User not logged in");
         }
 
-        const store = await this.fetchPolicies(webId);
+        const store = await new PolicyService().fetchPolicies(webId);
 
         // Collect target urls
         const targetUrls = Array.from(new Set(store.getQuads(null, ODRL('target'), null, null).map(q => q.object.id)));

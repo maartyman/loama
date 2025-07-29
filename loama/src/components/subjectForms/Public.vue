@@ -1,3 +1,9 @@
+<template>
+  <!-- We get warnings without a template -->
+  <div style="display: none;"></div>
+</template>
+
+
 <script setup lang="ts">
 import { usePodStore } from '@/lib/state';
 import { Permission, activeController } from 'loama-controller';

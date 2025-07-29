@@ -37,12 +37,6 @@
                     <LoCheck v-if="slotProps.data.permissions?.includes(Permission.Control)" />
                 </template>
             </Column>
-            <Column header="Enabled">
-                <template #body="slotProps">
-                    <ToggleSwitch v-model="slotProps.data.isEnabled"
-                        @update:modelValue="e => toggleSubjectAccess(e, slotProps.data.subject)" />
-                </template>
-            </Column>
             <Column header="">
                 <template #body="slotProps">
                     <div class="subject-actions">
