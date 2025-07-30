@@ -30,6 +30,7 @@ export enum Permission {
     Control = "Control",
     Read = "Read",
     Write = "Write",
+    Create = "Create",
 }
 
 export interface BaseSubject<T extends string> {

@@ -68,6 +68,11 @@
                         @update:checked="checked => handleSubjectPermissionUpdates(checked, Permission.Append)">
                         {{ Permission.Append }}
                     </LoSwitch>
+                    <LoSwitch :id="Permission.Create"
+                        :default-value="selectedSubject.permissions.includes(Permission.Create)" :disabled="updating"
+                        @update:checked="checked => handleSubjectPermissionUpdates(checked, Permission.Create)">
+                        {{ Permission.Create }}
+                    </LoSwitch>
                     <LoSwitch ref="controlCheckbox" :id="Permission.Control"
                         :default-value="selectedSubject.permissions.includes(Permission.Control)" :disabled="updating"
                         @update:checked="checked => handleControlPermissionChange(checked)">
@@ -98,7 +103,7 @@ import { useToast } from 'primevue/usetoast';
 import { useConfirm } from "primevue/useconfirm";
 import ToggleSwitch from 'primevue/toggleswitch';
 
-const ALL_PERMISSIONS: Permission[] = [Permission.Read, Permission.Write, Permission.Append];
+const ALL_PERMISSIONS: Permission[] = [Permission.Read, Permission.Write, Permission.Append, Permission.Create];
 
 const selectedSubject = ref<SubjectPermissions<WebIdSubject | PublicSubject> | null>(null);
 const updating = ref(false);

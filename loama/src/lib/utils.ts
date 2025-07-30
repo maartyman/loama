@@ -8,7 +8,7 @@ export const uriToName = (uri: string, isContainer: boolean) => {
 
 export const debounce = (fn: Function, wait: number) => {
     let timer: NodeJS.Timeout;
-    return function(...args: any[]) {
+    return function (...args: any[]) {
         if (timer) {
             clearTimeout(timer); // clear any pre-existing timer
         }
@@ -25,4 +25,5 @@ export const allPermissions = [
     Permission.Write,
     Permission.Append,
     Permission.Control,
+    Permission.Create,
 ]

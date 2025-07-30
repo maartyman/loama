@@ -89,6 +89,10 @@ export class PolicyInterpreter {
                         permissions.push(Permission.Control);
                         break;
 
+                    case "create":
+                        permissions.push(Permission.Create);
+                        break;
+
                     default:
                         console.warn(`Unrecognized ODRL action: ${action}`);
                 }

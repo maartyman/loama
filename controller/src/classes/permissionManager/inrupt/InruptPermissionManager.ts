@@ -88,7 +88,7 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         const target: TargetSubjects = new PolicyInterpreter().permissionsForOneResource(targetId, store);
 
         // If there are no private permissions, or no private permissions for the assignee, return the public ones (or nothing if they don't exist)
-        if (!target.private || !target.private.get(assigneeId)) return Array.from(target.public?.permissions!) ?? []
+        if (!target.private || !target.private.get(assigneeId)) return Array.from(target.public?.permissions! ?? [])
 
         return Array.from(target.private.get(assigneeId)?.permissions!) ?? []
     }
@@ -120,7 +120,7 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
                     type: "webId",
                     selector: { url: target.assigner }
                 } as unknown as T[K],
-                permissions: [Permission.Append, Permission.Control, Permission.Read, Permission.Write],
+                permissions: [Permission.Append, Permission.Control, Permission.Create, Permission.Read, Permission.Write],
                 isEnabled: true,
                 targetId: target.targetUrl
             })

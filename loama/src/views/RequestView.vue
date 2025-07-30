@@ -69,6 +69,7 @@ const requestedPermissions = ref({
     [Permission.Write]: false,
     [Permission.Append]: false,
     [Permission.Control]: false,
+    [Permission.Create]: false,
 })
 
 const accessRequestNodeToTreeNode = (key: string, node: ResourceAccessRequestNode): TreeNode => {
