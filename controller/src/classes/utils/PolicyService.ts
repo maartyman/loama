@@ -167,7 +167,7 @@ WHERE {}`)
         // 3: Find all rules with our target
         const targetRules = store.getQuads(null, ODRL("target"), namedNode(targetId), null);
 
-        const policyIds = new Map<string, Set<Permission>>();
+        const policyIds = new Map<string, Set<string>>();
         targetRules.forEach(
             // Filter only the targets that have rules with us as assignee, or public if no assignee
             target => {
@@ -184,8 +184,8 @@ WHERE {}`)
                     if (store.getQuads(rule, ODRL("assignee"), null, null).length === 0) {
                         for (const action of actions)
                             if (store.getQuads(rule, ODRL("action"), ODRL(action.toLowerCase()), null).length > 0) {
-                                if (!policyIds.has(policyId)) policyIds.set(policyId, new Set<Permission>());
-                                policyIds.get(policyId)!.add(action);
+                                if (!policyIds.has(policyId)) policyIds.set(policyId, new Set<string>());
+                                policyIds.get(policyId)!.add(rule.id);
                             }
                     }
                 } else {
@@ -193,8 +193,8 @@ WHERE {}`)
                     if (store.getQuads(rule, ODRL("assignee"), namedNode(assignee), null).length >= 1) {
                         for (const action of actions) {
                             if (store.getQuads(rule, ODRL("action"), ODRL(action.toLowerCase()), null).length > 0) {
-                                if (!policyIds.has(policyId)) policyIds.set(policyId, new Set<Permission>());
-                                policyIds.get(policyId)!.add(action);
+                                if (!policyIds.has(policyId)) policyIds.set(policyId, new Set<string>());
+                                policyIds.get(policyId)!.add(rule.id);
                             }
                         }
 
@@ -205,7 +205,7 @@ WHERE {}`)
 
         // 4: Delete the rule that has the matching target and permission for the matching assignee
         for (const policyId of policyIds.keys()) {
-            for (const action of policyIds.get(policyId)!) {
+            for (const ruleId of policyIds.get(policyId)!) {
                 const deleteResponse = await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
                     method: "PATCH",
                     headers: {
@@ -215,23 +215,18 @@ WHERE {}`)
                     body: `
     PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
 
-    DELETE {
-    ?rule ?p ?o .
-    <${policyId}> odrl:permission ?rule .
-    }
-    WHERE {
-    ?rule odrl:action odrl:${action.toLowerCase()} .
-    ?rule odrl:assigner <${webId}> .
-    ?rule odrl:target <${targetId}> .
-
-    ${assignee
-                            ? `?rule odrl:assignee <${assignee}> .`
-                            : `FILTER NOT EXISTS { ?rule odrl:assignee ?anyAssignee . }`}
-
-    ?policy odrl:permission ?rule .
-    }
-
-                    `
+DELETE {
+  <${ruleId}> ?p ?o .
+  ?policy odrl:permission <${ruleId}> .
+}
+WHERE {
+  OPTIONAL {
+    <${ruleId}> ?p ?o .
+  }
+  OPTIONAL {
+    ?policy odrl:permission <${ruleId}> .
+  }
+}`
                 });
 
                 if (!deleteResponse.ok) {
