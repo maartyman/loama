@@ -41,9 +41,9 @@ The `PolicyService` is used to make the required UMA server calls. Its main resp
 
 - `insertActionRule`: Given the target ID, the permissions to add and the specified subject, create a new rule for every action to be inserted. The new rules contain the logged on client as the assigner, the new subject as assignee (or none if no subject was specified, this means the subject is public), the target ID as odrl:target and the action to be inserted as odrl:action. The rule is inserted in an existing policy, or a new policy is created when this target did not have a policy before.
 
-    There are many things to be considered about this function.
+    There are some things to be considered about this function.
     1. It currently generates a random policy (if needed) and rule ID, but does not check if it already exists. The chances are slim that this happens, but not zero.
-    2. The current version will always PATCH, since there will always be a policy for the target (otherwise it would not be displayed in the first place). The POST exists for the case where something went wrong.
+    2. The current version will always PATCH, since there will always be a policy for the target (otherwise it would not be displayed in the first place). The POST exists in case something went wrong.
 
 - `deleteActionRule`: Given the target ID, the permissions to be deleted and the specified subject, remove the atomic rules where the subject has these permissions for this target. 
 
@@ -63,7 +63,7 @@ LOAMA previously required explicit **refresh** calls to stay in sync after edits
 The main managers are the `InruptPermissionManager`, the `WebIdManager` and the `PublicManager`. They contain the logic to perform the client-side operations on the policies.
 
 #### InruptPermissionManager
-This manager handles the functions that have the same implementation for underlying managers. The methods in this manager are the following:
+This manager handles functionality shared across all subject types. The methods in this manager are the following:
 - `getContainerPermissionList`: Get every target where you are the assigner of its policy. Since we need every target, independent of the subject, it could be placed here.
 It is to be said that the meaning of this function changed. The old implementation fetched the permissions for one specific container, we fetch it from the logged on user. This makes the argument `containerUrl: string` redundant. The argument `resourceToSkip: string[] = []` has been ignored, since no useful purpose of this was found.
 
@@ -72,7 +72,7 @@ There are also functions here where it would make more sense to move them to the
 - `getTargetPermissionsForUser`: A specific version of getRemotePermissions, where we are only interested in the permissions for one user on one target. This must be moved to the underlying managers. This function will probably be removed in the future. 
 
 #### Subejct-Specific Managers
-Because most of the work is done in the `PolicyService` and `PolicyInterpreter`, there is no big implementation in the WebID and Public Manager. The `createPermissions` and `deletePermissions` functions are one-liners, and the `editPermissions` is not actually needed in this implementation. 
+Because most of the work is done in the `PolicyService` and `PolicyInterpreter`, there is no big implementation in the WebID and Public Manager. Their `createPermissions` and `deletePermissions` functions are one-liners, and the `editPermissions` is not actually needed in this implementation. 
 
 ### Controller
 High level logic is implemented in the controller. It uses the managers to delegate the main functionality of the application. The functions that remained unchanged are:
