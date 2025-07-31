@@ -91,7 +91,7 @@ The functions that have a new implementations are the following:
 - `getContainerPermissionList`: This is nothing but a call to the manager's `getContainerPermissionList` function. Its implementation has been reduced a lot, but the current way is not clean. Because we know that we only need one manager to get every target and their permission info, we need to force our way to get only one. We do this by getting the public configuration, even though the controller is not exactly sure that this one exists. This works, because we know it exists. It's not a good solution and should be replaced, even though it works fine.
 - `getResourcePermissionList`: Works exactly the same as `getContainerPermissionList`, it just calls the `getRemotePermissions`.
 - `getItem`: Get the permission information for a subject on a resource. It works fine, but the ID and request ID are not present (since we have not implemented them).
-- `removeSubject`: Remove a subject from all its permissions. We first call the permissions for one user, and then we go on and delete them.
+- `removeSubject`: Remove all permissions for a subject. We first collect the permissions for one user, and then we go on and delete them.
 
 The functions that we do not need in the new implementation are:
 - `getExistingPermissions`: Our implementation always gets the data straight from the server. This function was used in the index-context, which has been replaced by the UMA AS-server.
