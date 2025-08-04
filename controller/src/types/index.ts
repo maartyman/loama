@@ -30,6 +30,7 @@ export enum Permission {
     Control = "Control",
     Read = "Read",
     Write = "Write",
+    Create = "Create",
 }
 
 export interface BaseSubject<T extends string> {
@@ -43,6 +44,7 @@ export interface SubjectPermissions<T = BaseSubject<string>> {
     subject: T;
     permissions: Permission[];
     isEnabled: boolean;
+    targetId?: string;
 }
 
 export interface ResourcePermissions<T = BaseSubject<string>> {

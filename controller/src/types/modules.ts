@@ -126,7 +126,7 @@ export interface IPermissionManager<T = Record<string, BaseSubject<string>>> {
     createPermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]): Promise<void>
     // Does not update the index file
     editPermissions<K extends SubjectKey<T>>(resource: string, item: IndexItem, subject: T[K], permissions: Permission[]): Promise<void>
-    deletePermissions<K extends SubjectKey<T>>(resource: string, subject: T[K]): Promise<void>
+    deletePermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]): Promise<void>
     getRemotePermissions<K extends SubjectKey<T>>(resourceUrl: string): Promise<SubjectPermissions<T[K]>[]>
     /**
     * Retrieve the permissions of the resources in this container.
@@ -139,4 +139,71 @@ export interface IPermissionManager<T = Record<string, BaseSubject<string>>> {
     * This indicates if the underlying SDK automatically removes the entry from the SDK if all permissions are revoked
     */
     shouldDeleteOnAllRevoked(): boolean
+    getTargetPermissionsForUser(assignerId: string, assigneeId: string, targetId: string): Promise<Permission[]>;
+    type: string;
+}
+
+// Temporal (?) interface to represent a policy
+export interface IPolicy {
+    rules: IRule[];
+    id: string;
+}
+
+export type RuleType = 'permission' | 'prohibition' | 'duty';
+
+// Temporal (?) interface to represent a rule within a policy
+export interface IRule {
+    // What kind of rule is this
+    ruleType: RuleType;
+
+    // Every rule has one assigner represented by its webID
+    assigner: string;
+
+    // Multiple assignees possible
+    assignees: string[];
+
+    // What actions does this rule definine?
+    permissions: string[];
+
+    // target objects of the rule
+    targets: string[];
+
+    // ID
+    id: string;
+}
+
+// The interface to display the permissions for one subject on one target
+export interface ISpecificTargetInfo {
+
+    // Indicate whether its public
+    public: boolean;
+
+    // The uri of the target
+    uri: string;
+
+    // The client that has permission over this target
+    subject: string;
+
+    // the actions set to the target
+    permissions: Set<Permission>;
+}
+
+// A target can have multiple private subjects and a public subject
+export interface TargetSubjects {
+    targetUrl: string;
+
+    // The map of subject names and their permissions on this target
+    private?: Map<string, ISpecificTargetInfo>;
+
+    // The public permission settings for this target
+    public?: ISpecificTargetInfo;
+
+    // WebID of the target owner
+    assigner: string;
+
+    // The policies referring to this target
+    policies: Set<string>;
+
+    // The rules referring to this target
+    rules: Set<string>;
 }
