@@ -25,6 +25,7 @@
         "@phosphor-icons/vue": "^2.2.1",
         "@primevue/themes": "^4.1.1",
         "@vueform/multiselect": "^2.6.9",
+        "dotenv": "^17.2.1",
         "loama-app": "^1.0.0",
         "loama-common": "^1.0.0",
         "loama-controller": "^1.0.0",
