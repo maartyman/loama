@@ -4,7 +4,7 @@ Currently, the application makes use of a hard-coded AS assignment in [PolicySer
 This approach is not ideal for users, as one user might have his WebID registered with several Authorization Servers.
 The way LOAMA talks to these ASs is through Controllers.
 These Controllers have to be configured in such a way that LOAMA has a single interface to talk with them,
-while these Controllers translate the requests coming from LOAMA to the format of the AS (e.g.: UMA AMA backend, ODRL, Google Drive's own format...)
+while these Controllers translate the requests coming from LOAMA to the format of the AS (e.g.: SOLID, ODRL, Google Drive's own format...)
 
 Future implementations should aim to define a Controller for each of the AS types LOAMA wants to be able to talk to.
 Say LOAMA supports three different AS platforms.
