@@ -15,4 +15,4 @@ This way, LOAMA needs to start only just as many Controller instances as it supp
 This is a reasonable trade-off between performance and decoupling.
 Instead of creating a new Controller instance for each switch, LOAMA can simply switch the previous one out.
 
-This idea is implemented as example in [this repository]().
+This idea is implemented as example in [this repository](https://github.com/bramcomyn/loama-as-assignment-proposal).
