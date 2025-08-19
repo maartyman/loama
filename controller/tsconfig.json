@@ -103,6 +103,5 @@
     },
     "include": [
         "src/**/*",
-        "environment.d.ts",
     ]
 }

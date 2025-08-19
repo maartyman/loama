@@ -3,7 +3,7 @@ import { Permission } from "../../types";
 import { ODRL, PolicyParser } from "./PolicyParser";
 import { DataFactory, Writer } from "n3";
 const { namedNode } = DataFactory
-export const UMA_URL = (encodedId: string = "") => `${process.env.AS_URL}${encodedId}`
+export const UMA_URL = (encodedId: string = "") => `http://localhost:4000/uma/policies/${encodedId}`
 
 export class PolicyService {
     constructor() { }
