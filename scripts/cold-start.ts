@@ -73,7 +73,8 @@ const main = async () => {
     rl.close();
 
     // make POST request to the API
-    const body = `@prefix ex: <http://example.org/>.
+    const body = `
+        @prefix ex: <http://example.org/>.
         @prefix odrl: <http://www.w3.org/ns/odrl/2/> .
         @prefix dct: <http://purl.org/dc/terms/>.
 
@@ -83,21 +84,24 @@ const main = async () => {
         ex:${rule} odrl:action odrl:${action} .
         ex:${rule} odrl:target <${target}> .
         ex:${rule} odrl:assignee <${assignee}> .
-        ex:${rule} odrl:assigner <${webid}> .'
+        ex:${rule} odrl:assigner <${webid}> .
     `
+
+    console.log(`\nPOST request with body\n${body}`);
 
     const response = await fetch('http://localhost:4000/uma/policies', {
         method: 'POST',
         headers: {
             'Authorization': `${webid}`,
             'Content-Type': 'text/turtle'
-        }
+        },
+        body: body
     });
 
     if (response.ok) {
         console.log('Policy added succesfully');
     } else {
-        console.log('Something went wrong! Try again.');
+        console.log('Something went wrong! Try again.', response.status);
     }
 }
 
