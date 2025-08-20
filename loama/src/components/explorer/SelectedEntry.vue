@@ -18,9 +18,9 @@
             </div>
             <p>Subjects with access:</p>
             <ul data-testid="sidepanel-permission-list">
-                <li :key="activeController.getLabelForSubject(permission.subject)"
+                <li :key="controllerStore.currentController.getLabelForSubject(permission.subject)"
                     v-for="permission in podStore.selectedEntry.permissionsPerSubject">
-                    {{ activeController.getLabelForSubject(permission.subject) }}
+                    {{ controllerStore.currentController.getLabelForSubject(permission.subject) }}
                 </li>
             </ul>
         </section>
@@ -36,14 +36,15 @@
 import { usePodStore } from '@/lib/state';
 import ExplorerEntity from './ExplorerEntity.vue';
 import { PhPencil, PhXCircle } from '@phosphor-icons/vue';
-import { activeController } from 'loama-controller';
 import LoButton from '../LoButton.vue';
 import { ref } from 'vue';
 import Drawer from 'primevue/drawer';
 import SubjectPermissionTable from './SubjectPermissionTable.vue';
 import ToggleSwitch from 'primevue/toggleswitch';
+import { useControllerStore } from '@/stores/useControllerStore';
 
 const podStore = usePodStore();
+const controllerStore = useControllerStore();
 
 defineEmits<{ close: [] }>()
 
@@ -54,9 +55,9 @@ const handleSubjectRequestAccess = (canRequest: boolean) => {
         throw new Error('No entry selected, this should not be possible');
     }
     if (canRequest) {
-        activeController.AccessRequest().allowAccessRequest(podStore.selectedEntry.resourceUrl)
+        controllerStore.currentController.AccessRequest().allowAccessRequest(podStore.selectedEntry.resourceUrl)
     } else {
-        activeController.AccessRequest().disallowAccessRequest(podStore.selectedEntry.resourceUrl)
+        controllerStore.currentController.AccessRequest().disallowAccessRequest(podStore.selectedEntry.resourceUrl)
     }
 
     podStore.refreshRequestAccessAllowance();

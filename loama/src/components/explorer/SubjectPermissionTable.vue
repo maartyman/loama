@@ -10,7 +10,7 @@
             <template #empty> No subjects with permissions set for this resource</template>
             <Column header="Name">
                 <template #body="slotProps">
-                    <p>{{ activeController.getLabelForSubject(slotProps.data.subject) }}</p>
+                    <p>{{ controllerStore.currentController.getLabelForSubject(slotProps.data.subject) }}</p>
                 </template>
             </Column>
             <Column header="Type">
@@ -50,7 +50,7 @@
         <Drawer :visible="!!selectedSubject" @update:visible="handleSubjectDrawerClose" header="Edit subject"
             position="right" class="subject-drawer">
             <div v-if="selectedSubject">
-                <p>Editing permissions for: {{ activeController.getLabelForSubject(selectedSubject.subject) }}</p>
+                <p>Editing permissions for: {{ controllerStore.currentController.getLabelForSubject(selectedSubject.subject) }}</p>
                 <div>
                     <LoSwitch :id="Permission.Read"
                         :default-value="selectedSubject.permissions.includes(Permission.Read)" :disabled="updating"
@@ -92,7 +92,7 @@ import { usePodStore } from '@/lib/state';
 import LoButton from '../LoButton.vue';
 import LoCheck from '../LoCheck.vue';
 import { PhPencil, PhWarning, PhX } from '@phosphor-icons/vue';
-import { Permission, activeController, type PublicSubject, type SubjectPermissions, type WebIdSubject } from 'loama-controller';
+import { Permission, type PublicSubject, type SubjectPermissions, type WebIdSubject } from 'loama-controller';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { ref } from 'vue';
@@ -102,6 +102,7 @@ import NewSubject from './NewSubject.vue';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from "primevue/useconfirm";
 import ToggleSwitch from 'primevue/toggleswitch';
+import { useControllerStore } from '@/stores/useControllerStore';
 
 const ALL_PERMISSIONS: Permission[] = [Permission.Read, Permission.Write, Permission.Append, Permission.Create];
 
@@ -111,6 +112,7 @@ const controlCheckbox = ref<typeof LoSwitch | null>(null)
 
 const toast = useToast();
 const podStore = usePodStore();
+const controllerStore = useControllerStore();
 const confirm = useConfirm();
 
 const handleControlPermissionChange = async (newValue: boolean) => {
@@ -154,9 +156,9 @@ const handleSubjectPermissionUpdates = async (newValue: boolean, permission: Per
     try {
         updating.value = true;
         if (newValue) {
-            await activeController.addPermission(podStore.selectedEntry.resourceUrl, permission, selectedSubject.value.subject);
+            await controllerStore.currentController.addPermission(podStore.selectedEntry.resourceUrl, permission, selectedSubject.value.subject);
         } else {
-            await activeController.removePermission(podStore.selectedEntry.resourceUrl, permission, selectedSubject.value.subject);
+            await controllerStore.currentController.removePermission(podStore.selectedEntry.resourceUrl, permission, selectedSubject.value.subject);
         }
     } catch (e) {
         console.error('Failed to update permissions', e);
@@ -171,9 +173,9 @@ const toggleSubjectAccess = async (isEnabled: boolean, subject: WebIdSubject | P
         throw new Error('No selected entry to toggle permissions for');
     }
     if (isEnabled) {
-        await activeController.enablePermissions(podStore.selectedEntry.resourceUrl, subject);
+        await controllerStore.currentController.enablePermissions(podStore.selectedEntry.resourceUrl, subject);
     } else {
-        await activeController.disablePermissions(podStore.selectedEntry.resourceUrl, subject);
+        await controllerStore.currentController.disablePermissions(podStore.selectedEntry.resourceUrl, subject);
     }
     await podStore.refreshEntryPermissions();
 }
@@ -197,7 +199,7 @@ const removeSubjectAccess = async (entry: WebIdSubject | PublicSubject) => {
         throw new Error("No selected entry to remove subject from")
     }
 
-    await activeController.removeSubject(podStore.selectedEntry.resourceUrl, entry);
+    await controllerStore.currentController.removeSubject(podStore.selectedEntry.resourceUrl, entry);
     await podStore.refreshEntryPermissions();
 }
 

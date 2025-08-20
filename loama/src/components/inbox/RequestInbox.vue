@@ -9,15 +9,17 @@
     </div>
 </template>
 <script setup lang="ts">
-import { activeController } from 'loama-controller';
+import { useControllerStore } from '@/stores/useControllerStore';
 import AccessRequestMessage from './AccessRequestMessage.vue';
 import { PhArrowClockwise } from '@phosphor-icons/vue';
 import { ref } from 'vue';
 
-let messages = ref(await activeController.AccessRequest().loadAccessRequests());
+const controllerStore = useControllerStore();
+
+let messages = ref(await controllerStore.currentController.AccessRequest().loadAccessRequests());
 
 const reloadMessages = async () => {
-    messages.value = await activeController.AccessRequest().loadAccessRequests();
+    messages.value = await controllerStore.currentController.AccessRequest().loadAccessRequests();
 }
 </script>
 <style scoped lang="scss">

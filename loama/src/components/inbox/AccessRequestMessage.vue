@@ -13,13 +13,14 @@
     </div>
 </template>
 <script setup lang="ts">
-import { Permission, activeController, createBasicController, type AccessRequestMessage } from 'loama-controller';
+import { Permission, type AccessRequestMessage } from 'loama-controller';
 import { computed } from 'vue';
 import LoButton from '../LoButton.vue';
 import { useToast } from 'primevue/usetoast';
 import { getDefaultSession } from '@inrupt/solid-client-authn-browser';
 import { listWebIdPodUrls } from 'loama-common';
 import { useConfirm } from 'primevue/useconfirm';
+import { useControllerStore } from '@/stores/useControllerStore';
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -29,6 +30,8 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: 'reload'): void
 }>();
+
+const controllerStore = useControllerStore();
 
 const aclLabels = computed(() => props.message.permissions.map(getLabelForAclPermission));
 
@@ -61,7 +64,7 @@ const getLabelForAclPermission = (permission: string) => {
 }
 
 const getActorController = async () => {
-    const actorController = createBasicController();
+    const actorController = controllerStore.currentController;
     const session = getDefaultSession();
     let pods = await listWebIdPodUrls(props.message.actor, session.fetch);
     actorController.setPodUrl(pods[0])
@@ -101,7 +104,7 @@ const acceptAccessRequest = async () => {
             console.error(`No permission assigned to requested permission: ${acl}`)
             continue;
         }
-        await activeController.addPermission(props.message.target, permission, {
+        await controllerStore.currentController.addPermission(props.message.target, permission, {
             type: "webId",
             selector: {
                 url: props.message.actor
@@ -111,7 +114,7 @@ const acceptAccessRequest = async () => {
 
     const actorController = await getActorController();
     try {
-        await activeController.AccessRequest().removeRequest(props.message.id)
+        await controllerStore.currentController.AccessRequest().removeRequest(props.message.id)
         await actorController.AccessRequest().sendResponseNotification("accept", props.message);
         toast.add({
             severity: "success",
@@ -133,7 +136,7 @@ const acceptAccessRequest = async () => {
 const rejectAccessRequest = async () => {
     const actorController = await getActorController();
     try {
-        await activeController.AccessRequest().removeRequest(props.message.id)
+        await controllerStore.currentController.AccessRequest().removeRequest(props.message.id)
         await actorController.AccessRequest().sendResponseNotification("reject", props.message);
         toast.add({
             severity: "info",

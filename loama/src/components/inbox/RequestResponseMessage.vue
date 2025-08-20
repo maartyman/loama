@@ -17,9 +17,10 @@
 </template>
 <script setup lang="ts">
 import { PhCheckCircle, PhXCircle } from '@phosphor-icons/vue';
-import { activeController, type RequestResponseMessage } from 'loama-controller';
+import { type RequestResponseMessage } from 'loama-controller';
 import { computed } from 'vue';
 import LoButton from '../LoButton.vue';
+import { useControllerStore } from '@/stores/useControllerStore';
 
 const props = defineProps<{
     message: RequestResponseMessage,
@@ -27,6 +28,8 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: "reload"): void,
 }>();
+
+const controllerStore = useControllerStore();
 
 const aclLabels = computed(() => props.message.permissions.map(p => aclToLabel[p] ?? p));
 const aclToLabel: Record<string, string> = {
@@ -37,7 +40,7 @@ const aclToLabel: Record<string, string> = {
 }
 
 const confirmMessage = async () => {
-    await activeController.AccessRequest().removeRequest(props.message.id);
+    await controllerStore.currentController.AccessRequest().removeRequest(props.message.id);
     emit("reload")
 }
 

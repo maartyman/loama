@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import LoInput from '@/components/LoInput.vue';
 import { getDefaultSession } from '@inrupt/solid-client-authn-browser';
-import { Permission, createBasicController, type ResourceAccessRequestNode } from 'loama-controller';
+import { Permission, type ResourceAccessRequestNode } from 'loama-controller';
 import { ref, watch } from 'vue';
 import Select from 'primevue/select';
 import { listWebIdPodUrls } from 'loama-common';
@@ -50,6 +50,7 @@ import LoButton from '@/components/LoButton.vue';
 import { useToast } from 'primevue/usetoast';
 import RequestWebIdPopup from '@/components/popups/RequestWebIdPopup.vue';
 import LoSwitch from '@/components/LoSwitch.vue';
+import { useControllerStore } from '@/stores/useControllerStore';
 
 const toast = useToast();
 
@@ -58,7 +59,9 @@ const podUrls = ref<string[]>([]);
 const selectedPodUrl = ref<string>("");
 const selectedEntries = ref<TreeSelectionKeys>({});
 const requestableFiles = ref<TreeNode[]>([]);
-const controller = ref(createBasicController());
+
+const controllerStore = useControllerStore();
+
 const debouncedPodFetcher = debounce(async (newVal: string) => {
     const session = getDefaultSession();
     let pods = await listWebIdPodUrls(newVal, session.fetch);
@@ -87,7 +90,7 @@ const sendRequestNotification = async () => {
     const permissions = Object.entries(requestedPermissions.value).filter(([_, checked]) => checked).map(([perm, _]) => perm as Permission)
 
     try {
-        await controller.value.AccessRequest().sendRequestNotification(session.info.webId!, checkedEntries, permissions)
+        await controllerStore.currentController.AccessRequest().sendRequestNotification(session.info.webId!, checkedEntries, permissions)
         toast.add({
             severity: "success",
             summary: "Access request(s) sent to user",
@@ -108,8 +111,8 @@ watch(webId, async (newVal) => {
 })
 
 watch(selectedPodUrl, async (newPodUrl) => {
-    controller.value.setPodUrl(newPodUrl);
-    const podNode = await controller.value.AccessRequest().getRequestableResources(newPodUrl);
+    controllerStore.currentController.setPodUrl(newPodUrl);
+    const podNode = await controllerStore.currentController.AccessRequest().getRequestableResources(newPodUrl);
     requestableFiles.value = [
         accessRequestNodeToTreeNode(newPodUrl, podNode),
     ];
