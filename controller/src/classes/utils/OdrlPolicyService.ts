@@ -1,13 +1,14 @@
 import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
 import { Permission } from "../../types";
 import { ODRL, PolicyParser } from "./PolicyParser";
-import { DataFactory, Writer } from "n3";
+import { DataFactory } from "n3";
 const { namedNode } = DataFactory
-export const UMA_URL = (encodedId: string = "") => `http://localhost:4000/uma/policies/${encodedId}`
+export const UMA_URL = (encodedId: string = "") => `http://localhost:4000/uma/policies${encodedId}`
 
-export class PolicyService {
+export class ODRLPolicyService {
     constructor() { }
 
+    // ? this code could be removed from this class and put inside utils.ts
     private getRandomString(length: number): string {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let result = '';
@@ -114,7 +115,8 @@ export class PolicyService {
             // The response contains the full and updated version of the policy, which we cannot return in this interface
             // If there already exists a policy for this target, patch this rule into it. Otherwise, just post a new one
             const response = policyIds.size > 0
-                ? this.patchPolicy(webId, policyId, `PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
+                ? this.patchPolicy(webId, policyId, `
+PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
 INSERT {
     <${policyId}> odrl:permission <${ruleId}> .
     <${ruleId}> a odrl:Permission ;
@@ -124,8 +126,9 @@ INSERT {
         odrl:assigner <${webId}> .
 }
 WHERE {}`)
-                : this.postPolicy(webId, `@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
-
+// ! this branch below has no use, as the current version of LOAMA is unable to create new policies on its own, it can only discover the policies already sent.
+                : this.postPolicy(webId, `
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
 <${policyId}> a odrl:Agreement ;
     odrl:permission <${ruleId}> .
 
@@ -213,7 +216,7 @@ WHERE {}`)
                         'Content-type': 'application/sparql-update',
                     },
                     body: `
-    PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
+PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
 
 DELETE {
   <${ruleId}> ?p ?o .

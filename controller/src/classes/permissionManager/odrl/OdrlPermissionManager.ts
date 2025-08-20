@@ -2,9 +2,9 @@ import { Access, AccessModes, getSolidDataset, getThingAll } from "@inrupt/solid
 import { SubjectPermissions, BaseSubject, IndexItem, Permission, ResourcePermissions } from "../../../types";
 import { SubjectKey, TargetSubjects } from "../../../types/modules";
 import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
-import { ODRL } from "../../../classes/utils/PolicyParser";
-import { PolicyInterpreter } from "../../../classes/utils/PolicyInterpreter";
-import { PolicyService } from "../../../classes/utils/PolicyService";
+import { ODRL } from "../../utils/PolicyParser";
+import { PolicyInterpreter } from "../../utils/PolicyInterpreter";
+import { ODRLPolicyService } from "../../utils/OdrlPolicyService";
 import { Store } from 'n3';
 
 const ACCESS_MODES_TO_PERMISSION_MAPPING: Record<keyof (AccessModes & Access), Permission> = {
@@ -16,12 +16,7 @@ const ACCESS_MODES_TO_PERMISSION_MAPPING: Record<keyof (AccessModes & Access), P
     controlWrite: Permission.Control,
 }
 
-/**
- * A permission manager implementation using the inrupt sdk to actually update the ACL
- * The "Inrupt" prefix is to indicate the usage of the inrupt sdk
- * This permission manager can be used without the the InruptStore
-*/
-export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubject<keyof T & string>>> {
+export abstract class ODRLPermissionManager<T extends Record<keyof T, BaseSubject<keyof T & string>>> {
 
     protected AccessModesToPermissions(accessModes: AccessModes | Access): Permission[] {
         const permissions = new Set<Permission>();
@@ -84,7 +79,7 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
      * TODO: split in subject
      */
     public async getTargetPermissionsForUser(assignerId: string, assigneeId: string, targetId: string): Promise<Permission[]> {
-        const store: Store = await new PolicyService().fetchPolicies(assignerId);
+        const store: Store = await new ODRLPolicyService().fetchPolicies(assignerId);
         const target: TargetSubjects = new PolicyInterpreter().permissionsForOneResource(targetId, store);
 
         // If there are no private permissions, or no private permissions for the assignee, return the public ones (or nothing if they don't exist)
@@ -105,7 +100,7 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
         }
 
         // Retrieve our policies
-        const store = await new PolicyService().fetchPolicies(webId);
+        const store = await new ODRLPolicyService().fetchPolicies(webId);
 
         // Get detailed info about the target
         const interpreter = new PolicyInterpreter();
@@ -164,7 +159,7 @@ export abstract class InruptPermissionManager<T extends Record<keyof T, BaseSubj
             throw new Error("User not logged in");
         }
 
-        const store = await new PolicyService().fetchPolicies(webId);
+        const store = await new ODRLPolicyService().fetchPolicies(webId);
 
         // Collect target urls
         const targetUrls = Array.from(new Set(store.getQuads(null, ODRL('target'), null, null).map(q => q.object.id)));

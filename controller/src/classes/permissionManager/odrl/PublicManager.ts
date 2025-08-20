@@ -1,17 +1,17 @@
-import { PolicyService } from "../../../classes/utils/PolicyService";
+import { ODRLPolicyService } from "../../utils/OdrlPolicyService";
 import { BaseSubject, IndexItem, Permission } from "../../../types";
 import { IPermissionManager, SubjectKey } from "../../../types/modules";
-import { InruptPermissionManager } from "./InruptPermissionManager";
+import { ODRLPermissionManager } from "./OdrlPermissionManager";
 
-export class PublicManager<T extends Record<keyof T, BaseSubject<keyof T & string>>> extends InruptPermissionManager<T> implements IPermissionManager<T> {
+export class PublicManager<T extends Record<keyof T, BaseSubject<keyof T & string>>> extends ODRLPermissionManager<T> implements IPermissionManager<T> {
 
     //. NOTE: Currently, it doesn't do any recursive permission setting on containers
     async createPermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]): Promise<void> {
-        await new PolicyService().insertActionRule(resource, permissions)
+        await new ODRLPolicyService().insertActionRule(resource, permissions)
     }
 
     async deletePermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]) {
-        await new PolicyService().deleteActionRule(resource, permissions)
+        await new ODRLPolicyService().deleteActionRule(resource, permissions)
 
     }
 

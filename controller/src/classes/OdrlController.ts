@@ -1,11 +1,15 @@
 import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
-import { BaseSubject, Index, IndexItem, Permission, ResourcePermissions, Resources, SubjectPermissions } from "../types";
+import { BaseSubject, Index, IndexItem, Permission, ResourcePermissions, Resources } from "../types";
 import { IAccessRequest, IController, IInboxConstructor, IStore, IStoreConstructor, SubjectConfig, SubjectConfigs, SubjectKey, SubjectType } from "../types/modules";
 import { AccessRequest } from "./accessRequests/AccessRequest";
-import { InruptAccessRequest } from "./accessRequests/InruptAccessRequest";
+import { ODRLAccessRequest } from "./accessRequests/OdrlAccessRequest";
 import { Mutex } from "./utils/Mutex";
 
-export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>> extends Mutex implements IController<T> {
+/**
+ * Controller which makes it calls to the backend AS through ODRL requests.
+ * Makes use of the Inrupt SDK to authenticate users.
+ */
+export class ODRLController<T extends Record<keyof T, BaseSubject<keyof T & string>>> extends Mutex implements IController<T> {
     private index: IStore<Index<T[keyof T & string]>>;
     private resources: IStore<Resources>;
     private accessRequest: AccessRequest;
@@ -17,7 +21,7 @@ export class Controller<T extends Record<keyof T, BaseSubject<keyof T & string>>
         // There is currently no "easy" solution to get around the as IStore...
         this.index = new storeConstructor("index.json", () => ({ id: "", items: [] })) as IStore<Index<T[keyof T & string]>>;
         this.resources = new storeConstructor("resources.json", () => ({ id: "", items: [] })) as IStore<Resources>;;
-        this.accessRequest = new InruptAccessRequest(this as unknown as Controller<{}>, inboxConstructor, this.resources);
+        this.accessRequest = new ODRLAccessRequest(this as unknown as ODRLController<{}>, inboxConstructor, this.resources);
         this.subjectConfigs = subjects;
     }
 

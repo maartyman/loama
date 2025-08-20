@@ -1,4 +1,4 @@
 export * from './GroupManager';
-export * from './InruptPermissionManager';
+export * from './OdrlPermissionManager';
 export * from './PublicManager';
 export * from './WebIdManager';

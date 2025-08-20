@@ -1,7 +1,7 @@
 import { Access, AccessModes, getGroupAccessAll, getResourceInfoWithAcl } from "@inrupt/solid-client";
 import { BaseSubject, IndexItem, Permission } from "../../../types";
 import { IPermissionManager, SubjectKey } from "../../../types/modules";
-import { InruptPermissionManager } from "./InruptPermissionManager";
+import { InruptPermissionManager } from "./OdrlPermissionManager";
 import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
 import { setAgentAccess } from "@inrupt/solid-client/universal";
 import { cacheBustedSessionFetch } from "../../../util";
