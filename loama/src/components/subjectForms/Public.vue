@@ -31,7 +31,7 @@ const onCreate = async () => {
         await controllerStore.currentController.addPermission(podStore.selectedEntry.resourceUrl, Permission.Read, {
             type: "public"
         })
-        await podStore.refreshEntryPermissions();
+        await podStore.refreshEntryPermissions(controllerStore.currentController);
         return true;
     } catch (e) {
         console.error(e)

@@ -32,11 +32,13 @@ import ExplorerBreadcrumbs from "./ExplorerBreadcrumbs.vue";
 import type { Entry } from "@/lib/types";
 import { usePodStore } from '@/lib/state';
 import SelectedEntry from './SelectedEntry.vue';
+import { useControllerStore } from '@/stores/useControllerStore';
 
 const route = useRoute();
 const podStore = usePodStore();
+const controllerStore = useControllerStore()
 
-await podStore.loadResources(store.usedPod)
+await podStore.loadResources(store.usedPod, controllerStore.currentController);
 
 const changeSelectedEntry = (entry: Entry | null) => podStore.selectedEntry = entry;
 
@@ -44,12 +46,12 @@ const fileUrl = (path: string | string[]) => `${store.usedPod}${path}`
 
 watch(() => route.params.filePath, async (path) => {
     podStore.selectedEntry = null;
-    podStore.loadResources(fileUrl(path));
+    podStore.loadResources(fileUrl(path), controllerStore.currentController);
 })
 
 // refresh the resources to show in the panel
 const refresh = async () => {
-    await podStore.loadResources(store.usedPod);
+    await podStore.loadResources(store.usedPod, controllerStore.currentController);
 };
 
 let interval: NodeJS.Timeout;

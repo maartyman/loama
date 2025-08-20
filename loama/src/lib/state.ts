@@ -1,8 +1,7 @@
 import type { Entry } from "./types";
-import { activeController, type PublicSubject, type ResourcePermissions, type WebIdSubject } from "loama-controller";
+import { type IController, type PublicSubject, type ResourcePermissions, type WebIdSubject } from "loama-controller";
 import { defineStore } from "pinia";
 import { store } from "loama-app";
-import { uriToName } from "@/lib/utils"
 import { PhLock, PhLockOpen } from "@phosphor-icons/vue";
 
 
@@ -36,8 +35,8 @@ export const usePodStore = defineStore("pod", {
         }
     },
     actions: {
-        async loadResources(url: string) {
-            this.podEntries = (await activeController.getContainerPermissionList(url))
+        async loadResources(url: string, controller: IController<{webId: WebIdSubject; public: PublicSubject;}>) {
+            this.podEntries = (await controller.getContainerPermissionList(url))
             // Filter out the current resource
             // .filter(entry => entry.resourceUrl !== url)
             // Filter out the things that are nested (?)
@@ -47,18 +46,18 @@ export const usePodStore = defineStore("pod", {
             //     return depth.length <= 2;
             // })
         },
-        async refreshEntryPermissions() {
+        async refreshEntryPermissions(controller: IController<{ webId: WebIdSubject; public: PublicSubject }>) {
             if (!this.selectedEntry) {
                 throw new Error('No selected entry to update permissions for');
             }
-            const newResourceInfo = await activeController.getResourcePermissionList(this.selectedEntry.resourceUrl);
+            const newResourceInfo = await controller.getResourcePermissionList(this.selectedEntry.resourceUrl);
             this.selectedEntry.permissionsPerSubject = newResourceInfo.permissionsPerSubject;
         },
-        async refreshRequestAccessAllowance() {
+        async refreshRequestAccessAllowance(controller: IController<{ webId: WebIdSubject; public: PublicSubject }>) {
             if (!this.selectedEntry) {
                 throw new Error('No selected entry to update permissions for');
             }
-            this.selectedEntry.canRequestAccess = await activeController.AccessRequest().canRequestAccessToResource(this.selectedEntry.resourceUrl);
+            this.selectedEntry.canRequestAccess = await controller.AccessRequest().canRequestAccessToResource(this.selectedEntry.resourceUrl);
         }
     }
 })

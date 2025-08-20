@@ -177,7 +177,7 @@ const toggleSubjectAccess = async (isEnabled: boolean, subject: WebIdSubject | P
     } else {
         await controllerStore.currentController.disablePermissions(podStore.selectedEntry.resourceUrl, subject);
     }
-    await podStore.refreshEntryPermissions();
+    await podStore.refreshEntryPermissions(controllerStore.currentController);
 }
 
 const handleSubjectDrawerClose = async () => {
@@ -191,7 +191,7 @@ const handleSubjectDrawerClose = async () => {
         return;
     }
     selectedSubject.value = null
-    await podStore.refreshEntryPermissions();
+    await podStore.refreshEntryPermissions(controllerStore.currentController);
 }
 
 const removeSubjectAccess = async (entry: WebIdSubject | PublicSubject) => {
@@ -200,7 +200,7 @@ const removeSubjectAccess = async (entry: WebIdSubject | PublicSubject) => {
     }
 
     await controllerStore.currentController.removeSubject(podStore.selectedEntry.resourceUrl, entry);
-    await podStore.refreshEntryPermissions();
+    await podStore.refreshEntryPermissions(controllerStore.currentController);
 }
 
 </script>

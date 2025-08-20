@@ -60,7 +60,7 @@ const handleSubjectRequestAccess = (canRequest: boolean) => {
         controllerStore.currentController.AccessRequest().disallowAccessRequest(podStore.selectedEntry.resourceUrl)
     }
 
-    podStore.refreshRequestAccessAllowance();
+    podStore.refreshRequestAccessAllowance(controllerStore.currentController);
 }
 </script>
 

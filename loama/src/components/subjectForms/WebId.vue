@@ -47,7 +47,7 @@ const onCreate = async () => {
                 url: webId.value
             }
         })
-        await podStore.refreshEntryPermissions();
+        await podStore.refreshEntryPermissions(controllerStore.currentController);
         return true;
     } catch (e) {
         console.error(e)
