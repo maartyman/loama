@@ -1,7 +1,8 @@
 <template>
     <div class="panel-container">
         <div class="left-panel">
-            <ExplorerBreadcrumbs />
+            <Button @click="refresh">Refresh</Button> <!-- let the user refresh manually without pressing F5 in order to retrieve new resources -->
+            <ExplorerBreadcrumbs /> 
             <ExplorerEntry v-for="resource in podStore.formattedEntries" :key="resource.resourceUrl"
                 @click="changeSelectedEntry(resource)" :isContainer="resource.isContainer" :authProtected="false"
                 :url="resource.name + '/'">{{ resource.name }}
@@ -22,8 +23,9 @@
 </template>
 
 <script setup lang="ts">
+import Button from 'primevue/button';
 import { store } from 'loama-app'
-import { watch } from "vue";
+import { onBeforeUnmount, onMounted, watch } from "vue";
 import ExplorerEntry from "./ExplorerEntry.vue";
 import { useRoute } from "vue-router";
 import ExplorerBreadcrumbs from "./ExplorerBreadcrumbs.vue";
@@ -43,6 +45,23 @@ const fileUrl = (path: string | string[]) => `${store.usedPod}${path}`
 watch(() => route.params.filePath, async (path) => {
     podStore.selectedEntry = null;
     podStore.loadResources(fileUrl(path));
+})
+
+// refresh the resources to show in the panel
+const refresh = async () => {
+    await podStore.loadResources(store.usedPod);
+};
+
+let interval: NodeJS.Timeout;
+
+// introduce autorefresh every 10 seconds
+onMounted(() => {
+    interval = setInterval(refresh, 10 ** 4);
+});
+
+// clear auto refreshing interval
+onBeforeUnmount(() => {
+    clearInterval(interval);
 })
 
 </script>
