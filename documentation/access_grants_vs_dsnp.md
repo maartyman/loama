@@ -399,6 +399,12 @@ After which the RP must send one more **ACK** message for the data to become ava
 }
 ```
 
+### Important notes
+
+The scenario sketched above follows the *happy path* where all parties agree and all messages are received correctly.
+In case there are any errors or disagreements amongst the communicating parties, the content negotiation protocol allows for verbose re-negotiation as well as termination of the agreement.
+When implementing this option, all these scenarios should be included and accounted for.
+
 ## Implementation Details
 
 These notes were discussed in private, but provide valuable information during implementation of either option.
