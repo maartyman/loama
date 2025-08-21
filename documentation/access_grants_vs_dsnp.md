@@ -195,8 +195,7 @@ A valid message would thus be:
 curl --location 'http://localhost:4000/uma/negotiations/request' \
 --header 'Authorization: https://example.pod.knows.idlab.ugent.be/profile/card#me' \
 --header 'Content-Type: application/ld+json' \
---data-raw '
-{
+--data-raw ' {
     "@context": [
         "https://w3id.org/dspace/2025/1/context.jsonld"
     ],
@@ -213,8 +212,7 @@ curl --location 'http://localhost:4000/uma/negotiations/request' \
         ]
     },
     "callbackAddress": "https://localhost:3000/callback"
-}
-'
+}'
 ```
 
 However, the DSCNP protocol does require one more action in order to transfer both `Consumer` and `Provider` towards the **REQUESTED** state: the AS *MUST* respond with an **ACK** formatted like below.
@@ -225,7 +223,7 @@ The standard, however, doesn't provide any guidelines on where this message shou
     "@context": [
         "https://w3id.org/dspace/2025/1/context.jsonld"
     ],
-    "@type": "Contractnegotiation",
+    "@type": "ContractNegotiation",
     "consumerPid": "urn:uuid:<RequestingPartyUUID>",
     "providerPid": "urn:uuid:<AuthorizationServerUUID>",
     "state": "REQUESTED"
@@ -242,7 +240,7 @@ The AS will now send a `ContractAgreementMessage` towards the callback address o
     "@context": [
         "https://w3id.org/dspace/2025/1/context.jsonld"
     ],
-    "@type": "ContractRequestMessage",
+    "@type": "ContractAgreementMessage",
     "consumerPid": "urn:uuid:<RequestingPartyUUID>",
     "providerPid": "urn:uuid:<AuthorizationServerUUID>",
     "agreement": {
@@ -269,12 +267,11 @@ A valid message looks like this:
 curl --location 'http://localhost:3000/callback/negotiations/<encodedRequestingPartyUUID>/agreement' \
 --header 'Authorization: https://pod.harrypodder.org/profile/card#me' \
 --header 'Content-Type: application/ld+json' \
---data-raw '
-{
+--data-raw '{
     "@context": [
         "https://w3id.org/dspace/2025/1/context.jsonld"
     ],
-    "@type": "ContractRequestMessage",
+    "@type": "ContractAgreementMessage",
     "consumerPid": "urn:uuid:<RequestingPartyUUID>",
     "providerPid": "urn:uuid:<AuthorizationServerUUID>",
     "agreement": {
@@ -288,8 +285,118 @@ curl --location 'http://localhost:3000/callback/negotiations/<encodedRequestingP
             "action": "read"
         ]
     }
+}'
+```
+
+The RP will respond with a valid **ACK** message in order to move on to the next step:
+
+```json
+{
+    "@context": [
+        "https://w3id.org/dspace/2025/1/context.jsonld"
+    ],
+    "@type": "ContractNegotiation",
+    "consumerPid": "urn:uuid:<RequestingPartyUUID>",
+    "providerPid": "urn:uuid:<AuthorizationServerUUID>",
+    "state": "AGREED"
 }
-'
+```
+
+### Step 3: **VERIFICATION**
+
+The RP **MUST** send a `ContractAgreementVerificationMessage` in order to be able to transition to the **VERIFICATION** state.
+This message simply looks like this:
+
+```json
+{
+    "@context": [
+        "https://w3id.org/dspace/2025/1/context.jsonld"
+    ],
+    "@type": "ContractAgreementVerificationMessage",
+    "consumerPid": "urn:uuid:<RequestingPartyUUID>",
+    "providerPid": "urn:uuid:<AuthorizationServerUUID>"
+}
+```
+
+It should be sent to the following endpoint on the AS:
+
+- **POST** `/negotiations/:providerPid/agreement/verification`: [Contract Agreement Verification Endpoint](https://eclipse-dataspace-protocol-base.github.io/DataspaceProtocol/2025-1-RC4/#negotiations-providerpid-agreement-verification-post).
+
+```shell-session
+curl --location 'http://localhost:4000/uma/negotiations/<encodedAuthorizationServerUUID>/agreement/verification' \
+--header 'Authorization: https://example.pod.knows.idlab.ugent.be/profile/card#me' \
+--header 'Content-Type: application/ld+json' \
+--data-raw ' {
+    "@context": [
+        "https://w3id.org/dspace/2025/1/context.jsonld"
+    ],
+    "@type": "ContractAgreementVerificationMessage",
+    "consumerPid": "urn:uuid:<RequestingPartyUUID>",
+    "providerPid": "urn:uuid:<AuthorizationServerUUID>"
+}'
+```
+
+To which the AS will respond with the following **ACK** message:
+
+```json
+{
+    "@context": [
+        "https://w3id.org/dspace/2025/1/context.jsonld"
+    ],
+    "@type": "ContractNegotiation",
+    "consumerPid": "urn:uuid:<RequestingPartyUUID>",
+    "providerPid": "urn:uuid:<AuthorizationServerUUID>",
+    "state": "VERIFIED"
+}
+```
+
+### Step 4: **FINALIZED**
+
+The AS *MUST* now sent one final `ContractNegotiationEventMessage` towards the RP:
+
+```json
+{
+    "@context": [
+        "https://w3id.org/dspace/2025/1/context.jsonld"
+    ],
+    "@type": "ContractNegotiationEventMessage",
+    "consumerPid": "urn:uuid:<RequestingPartyUUID>",
+    "providerPid": "urn:uuid:<AuthorizationServerUUID>",
+    "eventType": "FINALIZED"
+}
+```
+
+This must once again be sent to a different endpoint on the callback address:
+
+- **POST** `/negotiations/:consumerPid/events`: [Contract Negotiation Event Endpoint](https://eclipse-dataspace-protocol-base.github.io/DataspaceProtocol/2025-1-RC4/#negotiations-consumerpid-events-post).
+
+```shell-session
+curl --location 'http://localhost:3000/callback/negotiations/<encodedRequestingPartyUUID>/events' \
+--header 'Authorization: https://pod.harrypodder.org/profile/card#me' \
+--header 'Content-Type: application/ld+json' \
+--data-raw '{
+    "@context": [
+        "https://w3id.org/dspace/2025/1/context.jsonld"
+    ],
+    "@type": "ContractNegotiationEventMessage",
+    "consumerPid": "urn:uuid:<RequestingPartyUUID>",
+    "providerPid": "urn:uuid:<AuthorizationServerUUID>",
+    "eventType": "FINALIZED"
+}'
+```
+
+After which the RP must send one more **ACK** message for the data to become available:
+
+```json
+{
+    "@context": [
+        "https://w3id.org/dspace/2025/1/context.jsonld"
+    ],
+    "@type": "ContractNegotiation",
+    "consumerPid": "urn:uuid:<RequestingPartyUUID>",
+    "providerPid": "urn:uuid:<AuthorizationServerUUID>",
+    "state": "FINALIZED"
+}
 ```
 
 ## Implementation Details
@@ -302,3 +409,8 @@ These notes were discussed in private, but provide valuable information during i
 - **absence of policies for resources**: the current UMA AS implementation holds a record of policies for resources.
     When the AS receives a request for access to an unknown resource, it should possibly not return a 404 status code, as to not leak the information about the non-existence of a certain resource.
     Discoverable policies thus provide a finite set of resources the AS manages and accepts requests for.
+
+## Future work
+
+- **map current solution to data spaces solution**: the current choice to solve the problem is by using the request-grant model described in [the first part](#access-requests-and-grants-flow).
+However, it is important to keep the data spaces model in mind to offer compatibility in the future.
