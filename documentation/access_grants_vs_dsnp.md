@@ -123,6 +123,17 @@ DELETE {
 '
 ```
 
+After this, the resource should be accessible for the RP.
+
 ## Data Space Negotiation Protocol flow
 
 ## Implementation Details
+
+These notes were discussed in private, but provide valuable information during implementation of either option.
+
+- **resource coupling to RO**: neither of the request message flows holds any reference to the resource owner.
+The UMA AS implementation should provide this coupling internally in order to provide ROs with requests concering their resources.
+
+- **absence of policies for resources**: the current UMA AS implementation holds a record of policies for resources.
+When the AS receives a request for access to an unknown resource, it should possibly not return a 404 status code, as to not leak the information about the non-existence of a certain resource.
+Discoverable policies thus provide a finite set of resources the AS manages and accepts requests for.
