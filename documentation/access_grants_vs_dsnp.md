@@ -72,7 +72,7 @@ In order to register the request with the AS, the Requester has to send a **POST
 A simple curl request would look like this:
 
 ```shell-session
-$ curl --location 'http://localhost:4000/uma/requests' \
+curl --location 'http://localhost:4000/uma/requests' \
 --header 'Authorization: https://example.pod.knows.idlab.ugent.be/profile/card#me' \
 --header 'Content-Type: text/turtle' \
 --data-raw '
@@ -108,7 +108,7 @@ This **PATCH** should include a body of format `application/sparql-update`, whic
 In our use case, this message should look like this:
 
 ```shell-session
-$ curl -X PATCH --location 'http://localhost:4000/uma/requests/<encodedRequestIdentifier>' \
+curl -X PATCH --location 'http://localhost:4000/uma/requests/<encodedRequestIdentifier>' \
 --header 'Authorization: https://pod.harrypodder.org/profile/card#me' \
 --header 'Content-type: application/sparql-update' \
 --data-raw '
@@ -177,7 +177,7 @@ The example request would be formatted like this:
         "target": "urn:uuid:<ResourceUUID>",
         "permission": [
             {
-                "action": "use"
+                "action": "read"
             }
         ]
     },
@@ -187,12 +187,12 @@ The example request would be formatted like this:
 
 The AS *MUST* provide the following endpoint:
 
-- **POST** `/negotations/request`: [Contract Request Endpoint (init)](https://eclipse-dataspace-protocol-base.github.io/DataspaceProtocol/2025-1-RC4/#negotiations-request-post)
+- **POST** `/negotiations/request`: [Contract Request Endpoint (init)](https://eclipse-dataspace-protocol-base.github.io/DataspaceProtocol/2025-1-RC4/#negotiations-request-post)
 
 A valid message would thus be:
 
 ```shell-session
-$ curl --location 'http://localhost:4000/uma/negotations/request' \
+curl --location 'http://localhost:4000/uma/negotiations/request' \
 --header 'Authorization: https://example.pod.knows.idlab.ugent.be/profile/card#me' \
 --header 'Content-Type: application/ld+json' \
 --data-raw '
@@ -205,10 +205,10 @@ $ curl --location 'http://localhost:4000/uma/negotations/request' \
     "offer": {
         "@type": "Offer",
         "@id": "urn:uuid:<OfferUUID>",
-        "target": "urn:uuid:<ResourceUUID>", // Resource = http://localhost:3000/resources/resource.txt
+        "target": "urn:uuid:<ResourceUUID>",
         "permission": [
             {
-                "action": "use"
+                "action": "read"
             }
         ]
     },
@@ -225,11 +225,71 @@ The standard, however, doesn't provide any guidelines on where this message shou
     "@context": [
         "https://w3id.org/dspace/2025/1/context.jsonld"
     ],
-    "@type": "ContractNegotation",
+    "@type": "Contractnegotiation",
     "consumerPid": "urn:uuid:<RequestingPartyUUID>",
     "providerPid": "urn:uuid:<AuthorizationServerUUID>",
     "state": "REQUESTED"
 }
+```
+
+### Step 2: **AGREED**
+
+Our example will assume the best case: the AS agrees with the terms of the RP, and will accept this offer.
+The AS will now send a `ContractAgreementMessage` towards the callback address of the consumer:
+
+```json
+{
+    "@context": [
+        "https://w3id.org/dspace/2025/1/context.jsonld"
+    ],
+    "@type": "ContractRequestMessage",
+    "consumerPid": "urn:uuid:<RequestingPartyUUID>",
+    "providerPid": "urn:uuid:<AuthorizationServerUUID>",
+    "agreement": {
+        "@id": "urn:uuid:<AgreementUUID>",
+        "@type": "Agreement",
+        "target": "urn:uuid:<ResourceUUID>",
+        "timestamp": "2025-08-21T14:09:57.056Z",
+        "assigner": "http://pod.harrypodder.org/profile/card#me",
+        "assignee": "https://example.pod.knows.idlab.ugent.be/profile/card#me",
+        "permission": [
+            "action": "read"
+        ]
+    }
+}
+```
+
+The AS should send this message to the following endpoint under the callback address:
+
+- **POST** `/negotiations/:consumerPid/agreement`: [Contract Agreement Endpoint](https://eclipse-dataspace-protocol-base.github.io/DataspaceProtocol/2025-1-RC4/#negotiations-consumerpid-agreement-post).
+
+A valid message looks like this:
+
+```shell-session
+curl --location 'http://localhost:3000/callback/negotiations/<encodedRequestingPartyUUID>/agreement' \
+--header 'Authorization: https://pod.harrypodder.org/profile/card#me' \
+--header 'Content-Type: application/ld+json' \
+--data-raw '
+{
+    "@context": [
+        "https://w3id.org/dspace/2025/1/context.jsonld"
+    ],
+    "@type": "ContractRequestMessage",
+    "consumerPid": "urn:uuid:<RequestingPartyUUID>",
+    "providerPid": "urn:uuid:<AuthorizationServerUUID>",
+    "agreement": {
+        "@id": "urn:uuid:<AgreementUUID>",
+        "@type": "Agreement",
+        "target": "urn:uuid:<ResourceUUID>",
+        "timestamp": "2025-08-21T14:09:57.056Z",
+        "assigner": "http://pod.harrypodder.org/profile/card#me",
+        "assignee": "https://example.pod.knows.idlab.ugent.be/profile/card#me",
+        "permission": [
+            "action": "read"
+        ]
+    }
+}
+'
 ```
 
 ## Implementation Details
