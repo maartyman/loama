@@ -174,7 +174,7 @@ The example request would be formatted like this:
     "offer": {
         "@type": "Offer",
         "@id": "urn:uuid:<OfferUUID>",
-        "target": "urn:uuid:<ResourceUUID>", // Resource = http://localhost:3000/resources/resource.txt
+        "target": "urn:uuid:<ResourceUUID>",
         "permission": [
             {
                 "action": "use"
