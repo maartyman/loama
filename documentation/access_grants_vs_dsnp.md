@@ -55,17 +55,19 @@ This flow results in the FSM below:
 The RP creates the following `text/turtle` message:
 
 ```ttl
-@prefix ex: <http://example.org/> .
-@prefix req: <https://access.request.org/> .
-@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sotw: <https://w3id.org/force/sotw#> .
+@prefix odrl-fs: <https://w3id.org/odrl-fs> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix ex: <http://example.org/>.
 
-ex:request a req:Request ;
-    req:issued "2025-08-21T11:24:34.999Z"^^xsd:datetime ;
-    req:target <http://localhost:3000/resources/resource.txt> ;
-    req:action odrl:read ;
-    req:requester <https://example.pod.knows.idlab.ugent.be/profile/card#me> ;
-    req:status req:requested .
+ex:request a sotw:EvaluationRequest ;
+      dcterms:issued "2025-08-21T11:24:34.999Z"^^xsd:datetime ;
+      sotw:requestedTarget <http://localhost:3000/resources/resource.txt> ;
+      sotwrequestedAction odrl:read ;
+      sotw:requestingParty <https://example.pod.knows.idlab.ugent.be/profile/card#me ;
+      ex:requestStatus ex:requested .
 ```
 
 In order to register the request with the AS, the Requester has to send a **POST** request to `/uma/requests`.
@@ -76,17 +78,19 @@ curl --location 'http://localhost:4000/uma/requests' \
 --header 'Authorization: https://example.pod.knows.idlab.ugent.be/profile/card#me' \
 --header 'Content-Type: text/turtle' \
 --data-raw '
-@prefix ex: <http://example.org/> .
-@prefix req: <https://access.request.org/> .
-@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sotw: <https://w3id.org/force/sotw#> .
+@prefix odrl-fs: <https://w3id.org/odrl-fs> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
+@prefix dcterms: <http://purl.org/dc/terms/>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix ex: <http://example.org/>.
 
-ex:request a req:Request ;
-    req:issued "2025-08-21T11:24:34.999Z"^^xsd:datetime ;
-    req:target <http://localhost:3000/resources/resource.txt> ;
-    req:action odrl:read ;
-    req:requester <https://example.pod.knows.idlab.ugent.be/profile/card#me> ;
-    req:status req:requested .
+ex:request a sotw:EvaluationRequest ;
+      dcterms:issued "2025-08-21T11:24:34.999Z"^^xsd:datetime ;
+      sotw:requestedTarget <http://localhost:3000/resources/resource.txt> ;
+      sotw:requestedAction odrl:read ;
+      sotw:requestingParty <https://example.pod.knows.idlab.ugent.be/profile/card#me ;
+      ex:requestStatus ex:requested .
 '
 ```
 
@@ -115,11 +119,11 @@ curl -X PATCH --location 'http://localhost:4000/uma/requests/<encodedRequestIden
 PREFIX req: <https://access.request.org/>
 
 DELETE {
-    ?request req:status req:requested
+    ?request ex:requestStatus ex:requested
 } INSERT {
-    ?request req:status req:accepted # change to `req:denied` in order to deny
+    ?request ex:requestStatus ex:accepted # change to `ex:denied` in order to deny
 } WHERE {
-    ?request req:target <http://localhost:3000/resources/resource.txt>
+    ?request sotw:requestedTarget <http://localhost:3000/resources/resource.txt>
 }
 '
 ```
