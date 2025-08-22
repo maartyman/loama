@@ -118,7 +118,8 @@ curl -X PATCH --location 'http://localhost:4000/uma/requests/<encodedRequestIden
 --header 'Authorization: https://pod.harrypodder.org/profile/card#me' \
 --header 'Content-type: application/sparql-update' \
 --data-raw '
-PREFIX req: <https://access.request.org/>
+PREFIX ex: <https://access.request.org/>
+PREFIX sotw: <https://w3id.org/force/sotw#>
 
 DELETE {
     ?request ex:requestStatus ex:requested
