@@ -58,11 +58,11 @@ The RP creates the following `text/turtle` message:
 
 ```ttl
 @prefix sotw: <https://w3id.org/force/sotw#> .
-@prefix odrl-fs: <https://w3id.org/odrl-fs> .
-@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
-@prefix dcterms: <http://purl.org/dc/terms/>.
-@prefix dct: <http://purl.org/dc/terms/>.
-@prefix ex: <http://example.org/>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix ex: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 ex:request a sotw:EvaluationRequest ;
       dcterms:issued "2025-08-21T11:24:34.999Z"^^xsd:datetime ;
@@ -81,11 +81,11 @@ curl --location 'http://localhost:4000/uma/requests' \
 --header 'Content-Type: text/turtle' \
 --data-raw '
 @prefix sotw: <https://w3id.org/force/sotw#> .
-@prefix odrl-fs: <https://w3id.org/odrl-fs> .
-@prefix odrl: <http://www.w3.org/ns/odrl/2/>.
-@prefix dcterms: <http://purl.org/dc/terms/>.
-@prefix dct: <http://purl.org/dc/terms/>.
-@prefix ex: <http://example.org/>.
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix ex: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 ex:request a sotw:EvaluationRequest ;
       dcterms:issued "2025-08-21T11:24:34.999Z"^^xsd:datetime ;
