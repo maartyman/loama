@@ -68,7 +68,7 @@ ex:request a sotw:EvaluationRequest ;
       dcterms:issued "2025-08-21T11:24:34.999Z"^^xsd:datetime ;
       sotw:requestedTarget <http://localhost:3000/resources/resource.txt> ;
       sotw:requestedAction odrl:read ;
-      sotw:requestingParty <https://example.pod.knows.idlab.ugent.be/profile/card#me ;
+      sotw:requestingParty <https://example.pod.knows.idlab.ugent.be/profile/card#me> ;
       ex:requestStatus ex:requested .
 ```
 
@@ -91,7 +91,7 @@ ex:request a sotw:EvaluationRequest ;
       dcterms:issued "2025-08-21T11:24:34.999Z"^^xsd:datetime ;
       sotw:requestedTarget <http://localhost:3000/resources/resource.txt> ;
       sotw:requestedAction odrl:read ;
-      sotw:requestingParty <https://example.pod.knows.idlab.ugent.be/profile/card#me ;
+      sotw:requestingParty <https://example.pod.knows.idlab.ugent.be/profile/card#me> ;
       ex:requestStatus ex:requested .
 '
 ```
