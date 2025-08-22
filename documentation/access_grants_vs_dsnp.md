@@ -13,6 +13,8 @@ The AS enforces the policies set by the RO when the RP interacts with the RS (po
 This flow is visualized in the graph below.
 This document focuses on the message format and flow for the highlighted part of this graph.
 
+<!-- TODO: this visualization is not completely correct and should be updated -->
+
 ![use case visualization](./use_case.png)
 
 In this specific use case, we will identify the following entities:
@@ -65,7 +67,7 @@ The RP creates the following `text/turtle` message:
 ex:request a sotw:EvaluationRequest ;
       dcterms:issued "2025-08-21T11:24:34.999Z"^^xsd:datetime ;
       sotw:requestedTarget <http://localhost:3000/resources/resource.txt> ;
-      sotwrequestedAction odrl:read ;
+      sotw:requestedAction odrl:read ;
       sotw:requestingParty <https://example.pod.knows.idlab.ugent.be/profile/card#me ;
       ex:requestStatus ex:requested .
 ```
