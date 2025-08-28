@@ -4,7 +4,7 @@
  * and thus entirely based on the examples provided in [the policy management endpoint documentation](https://github.com/SolidLabResearch/user-managed-access/blob/feat/policy-endpoint/documentation/policy-management.md)
  */
 
-import { Permission } from "../controller/dist/types";
+import { Permission } from "../controller/src/types";
 import * as readline from 'node:readline';
 
 const rl = readline.createInterface({

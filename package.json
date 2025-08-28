@@ -11,10 +11,11 @@
     "scripts": {
         "build": "nx run-many -t build",
         "dev": "nx run-many --parallel=5 --exclude=doctorapp,mockbook -t dev",
-        "cold": "ts-node scripts/cold-start"
+        "cold": "tsx scripts/cold-start"
     },
     "devDependencies": {
-        "nx": "19.6.0"
+        "nx": "19.6.0",
+        "tsx": "^4.20.5"
     },
     "dependencies": {
         "@solid/community-server": "^7.1.2",
