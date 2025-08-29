@@ -11,6 +11,7 @@ import * as readline from 'node:readline';
 const defaultAssignee = "https://example.pod.knows.idlab.ugent.be/profile/card#me"
 
 const getRandomName = () => uuidv4();
+const getRandomResourceName = () => `${process.env.RESOURCE_SERVER}resources/${uuidv4()}`
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -32,7 +33,7 @@ const askAssigneeId = async () => askBasicQuestion(`Please provide the WebID for
 const selectAction = () => {
     return new Promise((resolve, reject) => {
         rl.question(
-            'What action do you want to associate? Choose one below: \n\t- read    [1]\n\t- write   [2]\n\t- append  [3]\n\t- create  [4]\n\t- control [5]\ndefault is read [1]',
+            'What action do you want to associate? Choose one below: \n\t- read    [1]\n\t- write   [2]\n\t- append  [3]\n\t- create  [4]\n\t- control [5]\ndefault is read [1]: ',
             (answer) => {
                 let choice = parseInt(answer, 10);
                 if (choice < 1 || choice > 5) reject("No valid option provided");
@@ -75,7 +76,7 @@ const main = async () => {
     const policy = await askPolicyName() || getRandomName();
     const rule = await askRuleName() || getRandomName();
     const action = await selectAction();
-    const target = await askTargetURL();
+    const target = await askTargetURL() || getRandomResourceName();
     const assignee = await askAssigneeId() || defaultAssignee;
     rl.close();
 
