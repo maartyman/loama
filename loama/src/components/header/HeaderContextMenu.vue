@@ -7,6 +7,24 @@
         <option v-for="pod in pods" :key="pod">{{ pod }}</option>
       </select>
     </div>
+    <div>
+    <label for="authorization-server-url">Select your Authorization Server</label>
+    <input
+      id="authorization-server-url"
+      v-model="controllerStore.authorizationServerURL"
+      @change="console.log(controllerStore.authorizationServerURL)"
+      placeholder="Enter your AS's URL"
+    />
+  </div>
+  <div>
+    <label for="authorization-server-type">Select the type of your Authorization Server</label>
+    <select
+      v-model="controllerStore.currentControllerType"
+      @change="console.log(controllerStore.type)"
+    >
+      <option v-for="type of types" :key="type">{{ type }}</option>
+    </select>
+  </div>
     <a @click.prevent="logout">
       <PhSignOut />
       <span>Sign out</span>
@@ -20,12 +38,14 @@ import { store } from 'loama-app'
 import { PhSignOut } from '@phosphor-icons/vue';
 import { listPodUrls } from 'loama-common';
 import { useControllerStore } from '@/stores/useControllerStore';
+import { computed } from 'vue';
 
 const pods = await listPodUrls(store.session);
 const controllerStore = useControllerStore();
+const types = computed(() => Array.from(controllerStore.types));
 
 async function logout() {
-  controllerStore.currentController.unsetPodUrl();
+  if (controllerStore.current) controllerStore.current.unsetPodUrl("");
   store.session.logout();
   router.push('/');
 }
@@ -51,7 +71,7 @@ label {
   display: block;
 }
 
-select {
+select, input {
   margin-bottom: var(--base-unit);
 }
 
