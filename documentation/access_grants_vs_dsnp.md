@@ -5,7 +5,7 @@ It starts by situating the use case and adding extra context, after which the me
 
 ## Use Case
 
-We'll be looking into the use case of accessing an online resource identified by an URI.
+We'll be looking into the use case of getting permission such that later we can access the resource using the UMA protocol.
 This resource is managed by a Resource Server (RS).
 The Resource Owner (RO) can alter the policies on their resources via the Authorization Server (AS).
 The AS enforces the policies set by the RO when the RP interacts with the RS (possibly through a Client).
@@ -239,7 +239,7 @@ The standard, however, doesn't provide any guidelines on where this message shou
 
 ### Step 2: **AGREED**
 
-Our example will assume the best case: the AS agrees with the terms of the RP, and will accept this offer.
+Our example will assume the best case: the RO agrees with the terms of the RP, and will accept this offer.
 The AS will now send a `ContractAgreementMessage` towards the callback address of the consumer:
 
 ```json
@@ -359,7 +359,7 @@ To which the AS will respond with the following **ACK** message:
 
 ### Step 4: **FINALIZED**
 
-The AS *MUST* now sent one final `ContractNegotiationEventMessage` towards the RP:
+The RO *MUST* now sent one final `ContractNegotiationEventMessage` towards the RP:
 
 ```json
 {
