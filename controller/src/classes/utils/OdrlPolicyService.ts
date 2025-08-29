@@ -2,11 +2,16 @@ import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
 import { Permission } from "../../types";
 import { ODRL, PolicyParser } from "./PolicyParser";
 import { DataFactory } from "n3";
-const { namedNode } = DataFactory
-export const UMA_URL = (encodedId: string = "") => `http://localhost:4000/uma/policies${encodedId}`
+const { namedNode } = DataFactory;
+
+export const UMA_URL = (authorizationServerURL: string, encodedId: string = "") => 
+    `${authorizationServerURL}/policies${encodedId}`;
 
 export class ODRLPolicyService {
-    constructor() { }
+    private readonly authorizationServerURL: string;
+    constructor(authorizationServerURL: string) { 
+        this.authorizationServerURL = authorizationServerURL;
+    }
 
     // ? this code could be removed from this class and put inside utils.ts
     private getRandomString(length: number): string {
@@ -22,7 +27,7 @@ export class ODRLPolicyService {
     public async fetchPolicies(webId: string) {
 
         // Get all our policies
-        const response = await fetch(UMA_URL(), {
+        const response = await fetch(UMA_URL(this.authorizationServerURL), {
             headers: {
                 "Authorization": webId,
                 "Accept": "text/turtle"
@@ -39,7 +44,7 @@ export class ODRLPolicyService {
 
     public async fetchOnePolicy(webId: string, policyId: string) {
         // Get all our policies
-        const response = await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
+        const response = await fetch(UMA_URL(this.authorizationServerURL,`/${encodeURIComponent(policyId)}`), {
             headers: {
                 "Authorization": webId,
                 "Accept": "text/turtle"
@@ -54,7 +59,7 @@ export class ODRLPolicyService {
     }
 
     public async postPolicy(webId: string, body: string) {
-        await fetch(UMA_URL(), {
+        await fetch(UMA_URL(this.authorizationServerURL), {
             method: 'POST',
             headers: {
                 'Authorization': webId,
@@ -66,7 +71,7 @@ export class ODRLPolicyService {
     }
 
     public async patchPolicy(webId: string, policyId: string, body: string) {
-        await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
+        await fetch(UMA_URL(this.authorizationServerURL,`/${encodeURIComponent(policyId)}`), {
             method: 'PATCH',
             headers: {
                 'Authorization': webId,
@@ -150,7 +155,7 @@ WHERE {}`)
         const webId = session.info.webId!;
 
         // 1: Fetch the policy contents
-        const response = await fetch(UMA_URL(), {
+        const response = await fetch(UMA_URL(this.authorizationServerURL), {
             headers: {
                 Authorization: webId,
                 Accept: "text/turtle"
@@ -209,7 +214,7 @@ WHERE {}`)
         // 4: Delete the rule that has the matching target and permission for the matching assignee
         for (const policyId of policyIds.keys()) {
             for (const ruleId of policyIds.get(policyId)!) {
-                const deleteResponse = await fetch(UMA_URL(`/${encodeURIComponent(policyId)}`), {
+                const deleteResponse = await fetch(UMA_URL(this.authorizationServerURL,`/${encodeURIComponent(policyId)}`), {
                     method: "PATCH",
                     headers: {
                         'Authorization': webId,

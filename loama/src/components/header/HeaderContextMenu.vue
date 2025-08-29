@@ -8,23 +8,26 @@
       </select>
     </div>
     <div>
-    <label for="authorization-server-url">Select your Authorization Server</label>
-    <input
-      id="authorization-server-url"
-      v-model="controllerStore.authorizationServerURL"
-      @change="console.log(controllerStore.authorizationServerURL)"
-      placeholder="Enter your AS's URL"
-    />
-  </div>
-  <div>
-    <label for="authorization-server-type">Select the type of your Authorization Server</label>
-    <select
-      v-model="controllerStore.currentControllerType"
-      @change="console.log(controllerStore.type)"
-    >
-      <option v-for="type of types" :key="type">{{ type }}</option>
-    </select>
-  </div>
+      <label for="authorization-server-url">Select your Authorization Server</label>
+      <input
+        id="authorization-server-url"
+        v-model="authorizationServerURL"
+        placeholder="Enter your AS's URL"
+      />
+    </div>
+    <div>
+      <label for="authorization-server-type">Select the type of your Authorization Server</label>
+      <select v-model="authorizationServerType">
+        <option v-for="type of types" :key="type">{{ type }}</option>
+      </select>
+    </div>
+
+    <div>
+      <button @click="updateController">
+        Change Controller
+      </button>
+    </div>
+
     <a @click.prevent="logout">
       <PhSignOut />
       <span>Sign out</span>
@@ -34,15 +37,25 @@
 
 <script setup lang="ts">
 import router from '@/router';
-import { store } from 'loama-app'
+import { store } from 'loama-app';
 import { PhSignOut } from '@phosphor-icons/vue';
 import { listPodUrls } from 'loama-common';
 import { useControllerStore } from '@/stores/useControllerStore';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const pods = await listPodUrls(store.session);
 const controllerStore = useControllerStore();
 const types = computed(() => Array.from(controllerStore.types));
+
+const authorizationServerURL = ref(controllerStore.authorizationServerURL);
+const authorizationServerType = ref(controllerStore.currentControllerType);
+
+function updateController() {
+  controllerStore.changeController(
+    authorizationServerType.value,
+    authorizationServerURL.value
+  );
+}
 
 async function logout() {
   if (controllerStore.current) controllerStore.current.unsetPodUrl("");

@@ -7,11 +7,11 @@ export class WebIdManager<T extends Record<keyof T, BaseSubject<keyof T & string
 
     // Create an action for this resource and this subject with the given permissions
     async createPermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]): Promise<void> {
-        await new ODRLPolicyService().insertActionRule(resource, permissions, subject.selector!.url);
+        await new ODRLPolicyService(this.authorizationServerURL).insertActionRule(resource, permissions, subject.selector!.url);
     }
 
     async deletePermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]) {
-        await new ODRLPolicyService().deleteActionRule(resource, permissions, subject.selector!.url)
+        await new ODRLPolicyService(this.authorizationServerURL).deleteActionRule(resource, permissions, subject.selector!.url)
     }
 
     async editPermissions<K extends SubjectKey<T>>(resource: string, item: IndexItem, subject: T[K], permissions: Permission[]) {

@@ -18,6 +18,12 @@ const ACCESS_MODES_TO_PERMISSION_MAPPING: Record<keyof (AccessModes & Access), P
 
 export abstract class ODRLPermissionManager<T extends Record<keyof T, BaseSubject<keyof T & string>>> {
 
+    protected readonly authorizationServerURL: string;
+
+    constructor(authorizationServerURL: string) {
+        this.authorizationServerURL = authorizationServerURL;
+    }
+
     protected AccessModesToPermissions(accessModes: AccessModes | Access): Permission[] {
         const permissions = new Set<Permission>();
         Object.entries(accessModes).forEach(([mode, isActive]) => {
@@ -79,7 +85,7 @@ export abstract class ODRLPermissionManager<T extends Record<keyof T, BaseSubjec
      * TODO: split in subject
      */
     public async getTargetPermissionsForUser(assignerId: string, assigneeId: string, targetId: string): Promise<Permission[]> {
-        const store: Store = await new ODRLPolicyService().fetchPolicies(assignerId);
+        const store: Store = await new ODRLPolicyService(this.authorizationServerURL).fetchPolicies(assignerId);
         const target: TargetSubjects = new PolicyInterpreter().permissionsForOneResource(targetId, store);
 
         // If there are no private permissions, or no private permissions for the assignee, return the public ones (or nothing if they don't exist)
@@ -100,7 +106,7 @@ export abstract class ODRLPermissionManager<T extends Record<keyof T, BaseSubjec
         }
 
         // Retrieve our policies
-        const store = await new ODRLPolicyService().fetchPolicies(webId);
+        const store = await new ODRLPolicyService(this.authorizationServerURL).fetchPolicies(webId);
 
         // Get detailed info about the target
         const interpreter = new PolicyInterpreter();
@@ -159,7 +165,7 @@ export abstract class ODRLPermissionManager<T extends Record<keyof T, BaseSubjec
             throw new Error("User not logged in");
         }
 
-        const store = await new ODRLPolicyService().fetchPolicies(webId);
+        const store = await new ODRLPolicyService(this.authorizationServerURL).fetchPolicies(webId);
 
         // Collect target urls
         const targetUrls = Array.from(new Set(store.getQuads(null, ODRL('target'), null, null).map(q => q.object.id)));

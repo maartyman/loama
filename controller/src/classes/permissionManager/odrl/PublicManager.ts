@@ -7,11 +7,11 @@ export class PublicManager<T extends Record<keyof T, BaseSubject<keyof T & strin
 
     //. NOTE: Currently, it doesn't do any recursive permission setting on containers
     async createPermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]): Promise<void> {
-        await new ODRLPolicyService().insertActionRule(resource, permissions)
+        await new ODRLPolicyService(this.authorizationServerURL).insertActionRule(resource, permissions)
     }
 
     async deletePermissions<K extends SubjectKey<T>>(resource: string, subject: T[K], permissions: Permission[]) {
-        await new ODRLPolicyService().deleteActionRule(resource, permissions)
+        await new ODRLPolicyService(this.authorizationServerURL).deleteActionRule(resource, permissions)
 
     }
 

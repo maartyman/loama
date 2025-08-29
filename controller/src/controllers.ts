@@ -7,7 +7,7 @@ import { PublicResolver } from "./classes/subjectResolvers/Public";
 import { WebIdResolver } from "./classes/subjectResolvers/WebId";
 import { PublicSubject, WebIdSubject } from "./types/subjects";
 
-export const createBasicController = () => {
+export const createBasicController = (authorizationServerURL: string) => {
     return new ODRLController<{
         webId: WebIdSubject,
         public: PublicSubject,
@@ -17,14 +17,12 @@ export const createBasicController = () => {
         {
             webId: {
                 resolver: new WebIdResolver(),
-                manager: new WebIdManager()
+                manager: new WebIdManager(authorizationServerURL)
             },
             public: {
                 resolver: new PublicResolver(),
-                manager: new PublicManager(),
+                manager: new PublicManager(authorizationServerURL),
             },
-        },
+        }
     )
 }
-
-export const activeController = createBasicController()
