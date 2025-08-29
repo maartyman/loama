@@ -38,7 +38,7 @@ const route = useRoute();
 const podStore = usePodStore();
 const controllerStore = useControllerStore()
 
-await podStore.loadResources(store.usedPod, controllerStore.currentController);
+await podStore.loadResources(store.usedPod, controllerStore.current);
 
 const changeSelectedEntry = (entry: Entry | null) => podStore.selectedEntry = entry;
 
@@ -46,12 +46,12 @@ const fileUrl = (path: string | string[]) => `${store.usedPod}${path}`
 
 watch(() => route.params.filePath, async (path) => {
     podStore.selectedEntry = null;
-    podStore.loadResources(fileUrl(path), controllerStore.currentController);
+    podStore.loadResources(fileUrl(path), controllerStore.current);
 })
 
 // refresh the resources to show in the panel
 const refresh = async () => {
-    await podStore.loadResources(store.usedPod, controllerStore.currentController);
+    await podStore.loadResources(store.usedPod, controllerStore.current);
 };
 
 let interval: NodeJS.Timeout;

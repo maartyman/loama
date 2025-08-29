@@ -10,7 +10,7 @@
             <template #empty> No subjects with permissions set for this resource</template>
             <Column header="Name">
                 <template #body="slotProps">
-                    <p>{{ controllerStore.currentController.getLabelForSubject(slotProps.data.subject) }}</p>
+                    <p>{{ controllerStore.current.getLabelForSubject(slotProps.data.subject) }}</p>
                 </template>
             </Column>
             <Column header="Type">
@@ -50,7 +50,7 @@
         <Drawer :visible="!!selectedSubject" @update:visible="handleSubjectDrawerClose" header="Edit subject"
             position="right" class="subject-drawer">
             <div v-if="selectedSubject">
-                <p>Editing permissions for: {{ controllerStore.currentController.getLabelForSubject(selectedSubject.subject) }}</p>
+                <p>Editing permissions for: {{ controllerStore.current.getLabelForSubject(selectedSubject.subject) }}</p>
                 <div>
                     <LoSwitch :id="Permission.Read"
                         :default-value="selectedSubject.permissions.includes(Permission.Read)" :disabled="updating"
@@ -156,9 +156,9 @@ const handleSubjectPermissionUpdates = async (newValue: boolean, permission: Per
     try {
         updating.value = true;
         if (newValue) {
-            await controllerStore.currentController.addPermission(podStore.selectedEntry.resourceUrl, permission, selectedSubject.value.subject);
+            await controllerStore.current.addPermission(podStore.selectedEntry.resourceUrl, permission, selectedSubject.value.subject);
         } else {
-            await controllerStore.currentController.removePermission(podStore.selectedEntry.resourceUrl, permission, selectedSubject.value.subject);
+            await controllerStore.current.removePermission(podStore.selectedEntry.resourceUrl, permission, selectedSubject.value.subject);
         }
     } catch (e) {
         console.error('Failed to update permissions', e);
@@ -173,11 +173,11 @@ const toggleSubjectAccess = async (isEnabled: boolean, subject: WebIdSubject | P
         throw new Error('No selected entry to toggle permissions for');
     }
     if (isEnabled) {
-        await controllerStore.currentController.enablePermissions(podStore.selectedEntry.resourceUrl, subject);
+        await controllerStore.current.enablePermissions(podStore.selectedEntry.resourceUrl, subject);
     } else {
-        await controllerStore.currentController.disablePermissions(podStore.selectedEntry.resourceUrl, subject);
+        await controllerStore.current.disablePermissions(podStore.selectedEntry.resourceUrl, subject);
     }
-    await podStore.refreshEntryPermissions(controllerStore.currentController);
+    await podStore.refreshEntryPermissions(controllerStore.current);
 }
 
 const handleSubjectDrawerClose = async () => {
@@ -191,7 +191,7 @@ const handleSubjectDrawerClose = async () => {
         return;
     }
     selectedSubject.value = null
-    await podStore.refreshEntryPermissions(controllerStore.currentController);
+    await podStore.refreshEntryPermissions(controllerStore.current);
 }
 
 const removeSubjectAccess = async (entry: WebIdSubject | PublicSubject) => {
@@ -199,8 +199,8 @@ const removeSubjectAccess = async (entry: WebIdSubject | PublicSubject) => {
         throw new Error("No selected entry to remove subject from")
     }
 
-    await controllerStore.currentController.removeSubject(podStore.selectedEntry.resourceUrl, entry);
-    await podStore.refreshEntryPermissions(controllerStore.currentController);
+    await controllerStore.current.removeSubject(podStore.selectedEntry.resourceUrl, entry);
+    await podStore.refreshEntryPermissions(controllerStore.current);
 }
 
 </script>
