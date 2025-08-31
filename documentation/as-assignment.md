@@ -1,18 +1,18 @@
 # Dynamic assignment of Authorization Server
 
-Currently, the application makes use of a hard-coded AS assignment in [PolicyService.ts](../controller/src/classes/utils/PolicyService.ts).
-This approach is not ideal for users, as one user might have his WebID registered with several Authorization Servers.
-The way LOAMA talks to these ASs is through Controllers.
-These Controllers have to be configured in such a way that LOAMA has a single interface to talk with them,
-while these Controllers translate the requests coming from LOAMA to the format of the AS (e.g.: SOLID, ODRL, Google Drive's own format...)
+## General idea
 
-Future implementations should aim to define a Controller for each of the AS types LOAMA wants to be able to talk to.
-Say LOAMA supports three different AS platforms.
-When the application starts, LOAMA can choose to let the user enter the URL and type of their AS, just like it prompts for the WebID.
-LOAMA sees the type of AS and can then choose the right Controller instance.
-This way, LOAMA needs to start only just as many Controller instances as it supports different AS platforms.
+The LOAMA frontend allows user to configure the authorization server with which they wish to communicate.
+This way, users can have multiple different authorization servers to configure policies for policies hosted on different types of servers, e.g. UMA vs. SOLID.
+The configuration allows the user to set the URL and choose from a preconfigured type of authorization server.
+For each of these types, the LOAMA implementation should have a controller class that can handle communication with the backend.
+Currently, only ODRL is supported.
 
-This is a reasonable trade-off between performance and decoupling.
-Instead of creating a new Controller instance for each switch, LOAMA can simply switch the previous one out.
+When the user sets a new URL, the controller store will swap out the old controller with a new instance, configured to handle changes to policies configured on the new backend.
+Users should note that they might need to refresh (or wait for autorefresh) to see the changes reflected in the frontend.
 
-This idea is implemented as example in [this repository](https://github.com/bramcomyn/loama-as-assignment-proposal).
+## Further work
+
+Future implementations should aim to make the swapping of controllers as easily configurable as possible.
+A single `configuration` object that is tailored to the needs of each controller should be sufficient.
+The current implementation simply passes the URL of the authorization server for the `ODRLController`.
