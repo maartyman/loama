@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
-import RequestView from '@/views/RequestView.vue'
 import { store } from 'loama-app'
 import { listPodUrls } from 'loama-common'
 import HeaderLayout from '@/components/layouts/HeaderLayout.vue'
-import InboxView from '@/views/InboxView.vue'
 import { useControllerStore } from '@/stores/useControllerStore'
+import AccessRequest from '@/components/access-requests/AccessRequest.vue'
+import AccessGrant from '@/components/access-grants/AccessGrant.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,14 +26,14 @@ const router = createRouter({
                     component: HomeView
                 },
                 {
-                    path: "/request",
-                    name: "request",
-                    component: RequestView,
+                    path: `/access-requests/`,
+                    name: 'access-requests',
+                    component: AccessRequest
                 },
                 {
-                    path: "/inbox",
-                    name: "inbox",
-                    component: InboxView,
+                    path: '/access-grants/',
+                    name: 'access-grants',
+                    component: AccessGrant
                 }
             ]
         }
