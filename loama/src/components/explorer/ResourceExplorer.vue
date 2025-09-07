@@ -90,8 +90,8 @@ i {
 
 .panel-container {
     display: flex;
-    height: calc(100vh - var(--base-unit)*13);
-    width: 100vw;
+    height: calc(100vh - var(--base-unit)*14);
+    width: 100%;
 }
 
 .left-panel,
