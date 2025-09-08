@@ -12,7 +12,12 @@ const props = defineProps<{
       <a :href="props.request.uid" target="_blank" class="request-uid">
         {{ props.request.uid }}
       </a>
-      <p class="request-target">Target: {{ props.request.target }}</p>
+      <div class="request-details">
+        <span class="label">target:</span>
+        <span class="value">{{ props.request.target }}</span>
+        <span class="label">action:</span>
+        <span class="value action">{{ props.request.action }}</span>
+      </div>
     </div>
     <span 
       class="status-badge" 
@@ -43,29 +48,52 @@ const props = defineProps<{
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  max-width: 70%; /* so the badge has breathing space */
 }
 
 .request-uid {
   color: var(--solid-purple);
   font-weight: 600;
   text-decoration: none;
+  word-break: break-all;
 }
 
 .request-uid:hover {
   text-decoration: underline;
 }
 
-.request-target {
-  font-size: calc(var(--base-unit)*2);
+.request-details {
+  font-size: 0.95rem;
+  color: var(--off-black);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.request-details .label {
+  font-weight: 600;
+  color: var(--solid-purple);
+}
+
+.request-details .value {
+  font-family: monospace;
   color: var(--off-black);
 }
 
+.request-details .action {
+  text-transform: uppercase;
+  background-color: var(--off-white);
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+}
 .status-badge {
   padding: 0.6rem 1rem;
-  border-radius: 0.5rem; /* less round */
-  font-size: 1.1rem;     /* larger text */
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
   font-weight: 700;
   text-transform: capitalize;
+  white-space: nowrap;
 }
 
 .status-badge.requested {
