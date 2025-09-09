@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { AccessRequest } from './util';
+import type { AccessRequest } from '@/lib/utils';
 
 const props = defineProps<{
-    request: AccessRequest
+  request: AccessRequest
 }>();
 </script>
 
@@ -19,8 +19,8 @@ const props = defineProps<{
         <span class="value action">{{ props.request.action }}</span>
       </div>
     </div>
-    <span 
-      class="status-badge" 
+    <span
+      class="status-badge"
       :class="{
         requested: props.request.status.includes('requested'),
         accepted: props.request.status.includes('accepted'),
@@ -40,15 +40,15 @@ const props = defineProps<{
   padding: 1rem;
   border: 0.125rem solid var(--lama-gray);
   border-radius: var(--base-corner);
-  background-color: white;
-  margin-bottom: 0.75rem;
+  background-color: var(--off-white);
+  gap: 1rem;
 }
 
 .request-info {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  max-width: 70%; /* so the badge has breathing space */
+  max-width: 70%;
 }
 
 .request-uid {
@@ -57,7 +57,6 @@ const props = defineProps<{
   text-decoration: none;
   word-break: break-all;
 }
-
 .request-uid:hover {
   text-decoration: underline;
 }
@@ -87,10 +86,11 @@ const props = defineProps<{
   border-radius: 0.25rem;
   font-size: 0.9rem;
 }
+
 .status-badge {
   padding: 0.6rem 1rem;
   border-radius: 0.5rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   text-transform: capitalize;
   white-space: nowrap;
@@ -100,12 +100,10 @@ const props = defineProps<{
   background-color: #fff3cd;
   color: #856404;
 }
-
 .status-badge.accepted {
   background-color: #d4edda;
   color: #155724;
 }
-
 .status-badge.denied {
   background-color: #f8d7da;
   color: #721c24;
