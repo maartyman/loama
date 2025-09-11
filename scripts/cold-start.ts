@@ -8,10 +8,11 @@ import { Permission } from "../controller/src/types";
 import { v4 as uuidv4 } from 'uuid';
 import * as readline from 'node:readline';
 
-const defaultAssignee = "https://example.pod.knows.idlab.ugent.be/profile/card#me"
+const defaultAssignee = process.env.ASSIGNEE_IRI || "https://example.pod.knows.idlab.ugent.be/profile/card#me";
+const defaultAssigner = process.env.ASSIGNER_IRI || 'https://example.pod.knows.idlab.ugent.be/profile/card#me';
 
 const getRandomName = () => uuidv4();
-const getRandomResourceName = () => `${process.env.RESOURCE_SERVER}resources/${uuidv4()}`
+const getRandomResourceName = () => `${process.env.RESOURCE_SERVER || 'http://localhost:3000'}/resources/${uuidv4()}`
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -22,18 +23,18 @@ const askBasicQuestion = async (question: string) => {
     return new Promise((resolve) => {
         rl.question(question, (answer: string) => resolve(answer));
     });
-}
+};
 
 const askWebId = async () => askBasicQuestion('Please provide your own WebID for authorization: ');
 const askPolicyName = async () => askBasicQuestion('What do you want to name your policy? ');
 const askRuleName = async () => askBasicQuestion('What do you want your rule to be named? ');
 const askTargetURL = async () => askBasicQuestion('Please enter the URL to the resource: ');
-const askAssigneeId = async () => askBasicQuestion(`Please provide the WebID for the assignee (default: ${defaultAssignee}): `);
+const askAssigneeId = async () => askBasicQuestion(`Please provide the WebID for the assignee: `);
 
 const selectAction = () => {
     return new Promise((resolve, reject) => {
         rl.question(
-            'What action do you want to associate? Choose one below: \n\t- read    [1]\n\t- write   [2]\n\t- append  [3]\n\t- create  [4]\n\t- control [5]\ndefault is read [1]: ',
+            'What action do you want to associate? Choose one below: \n\t- read    [1]\n\t- write   [2]\n\t- append  [3]\n\t- create  [4]\n\t- control [5]: ',
             (answer) => {
                 let choice = parseInt(answer, 10);
                 if (choice < 1 || choice > 5) reject("No valid option provided");
@@ -72,12 +73,13 @@ const main = async () => {
     console.log("To use default ENV vars, leave empty.")
     
     // ask user for webid, policy and rule names, target, associated action and assignee
-    const webid = await askWebId() || process.env.ASSIGNER_IRI;
+    const webid = await askWebId() || defaultAssigner;
     const policy = await askPolicyName() || getRandomName();
     const rule = await askRuleName() || getRandomName();
     const action = await selectAction();
     const target = await askTargetURL() || getRandomResourceName();
     const assignee = await askAssigneeId() || defaultAssignee;
+
     rl.close();
 
     // make POST request to the API
@@ -98,7 +100,7 @@ const main = async () => {
 
     console.log(`\nPOST request with body\n${body}`);
 
-    const response = await fetch(`${process.env.AUTHORIZATION_SERVER}/uma/policies`, {
+    const response = await fetch(`${process.env.AUTHORIZATION_SERVER || 'http://localhost:4000'}/uma/policies`, {
         method: 'POST',
         headers: {
             'Authorization': `${webid}`,
