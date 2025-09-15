@@ -34,10 +34,13 @@ const askActions = async () => {
     const answer = await askBasicQuestion(
         'Enter actions to associate (comma separated). Options: read, write, append, create, control: '
     );
-    return answer
+    
+    const actions = answer
         .split(",")
         .map(a => a.trim().toLowerCase())
         .filter(a => a); // remove empty entries
+
+    return actions.length === 0 ? ['read'] : actions;
 };
 
 const main = async () => {
