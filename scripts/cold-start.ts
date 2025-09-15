@@ -1,18 +1,18 @@
 /**
  * This script serves to solve the cold start problem for LOAMA.
- * It is equivalent to a series of configurable cURL requests being sent towards the UMA AMA server
- * and thus entirely based on the examples provided in [the policy management endpoint documentation](https://github.com/SolidLabResearch/user-managed-access/blob/feat/policy-endpoint/documentation/policy-management.md)
+ * It creates a new policy with one or more actions attached to the same target and assignee.
+ * Based on the examples provided in the UMA AMA policy management documentation.
  */
 
-import { Permission } from "../controller/src/types";
 import { v4 as uuidv4 } from 'uuid';
 import * as readline from 'node:readline';
 
 const defaultAssignee = process.env.ASSIGNEE_IRI || "https://example.pod.knows.idlab.ugent.be/profile/card#me";
-const defaultAssigner = process.env.ASSIGNER_IRI || 'https://example.pod.knows.idlab.ugent.be/profile/card#me';
+const defaultAssigner = process.env.ASSIGNER_IRI || "https://example.pod.knows.idlab.ugent.be/profile/card#me";
 
 const getRandomName = () => uuidv4();
-const getRandomResourceName = () => `${process.env.RESOURCE_SERVER || 'http://localhost:3000'}/resources/${uuidv4()}`
+const getRandomResourceName = () =>
+    `${process.env.RESOURCE_SERVER || 'http://localhost:3000/'}resources/${uuidv4()}`;
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -20,87 +20,68 @@ const rl = readline.createInterface({
 });
 
 const askBasicQuestion = async (question: string) => {
-    return new Promise((resolve) => {
-        rl.question(question, (answer: string) => resolve(answer));
+    return new Promise<string>((resolve) => {
+        rl.question(question, (answer: string) => resolve(answer.trim()));
     });
 };
 
 const askWebId = async () => askBasicQuestion('Please provide your own WebID for authorization: ');
 const askPolicyName = async () => askBasicQuestion('What do you want to name your policy? ');
-const askRuleName = async () => askBasicQuestion('What do you want your rule to be named? ');
 const askTargetURL = async () => askBasicQuestion('Please enter the URL to the resource: ');
 const askAssigneeId = async () => askBasicQuestion(`Please provide the WebID for the assignee: `);
 
-const selectAction = () => {
-    return new Promise((resolve, reject) => {
-        rl.question(
-            'What action do you want to associate? Choose one below: \n\t- read    [1]\n\t- write   [2]\n\t- append  [3]\n\t- create  [4]\n\t- control [5]: ',
-            (answer) => {
-                let choice = parseInt(answer, 10);
-                if (choice < 1 || choice > 5) reject("No valid option provided");
-
-                let permission: Permission;
-                
-                switch (choice) {
-                    case 1 : { 
-                        permission = Permission.Read;
-                        break;
-                    } case 2 : {
-                        permission = Permission.Write;
-                        break;
-                    } case 3 : {
-                        permission = Permission.Append;
-                        break;
-                    } case 4 : {
-                        permission = Permission.Create;
-                        break;
-                    } case 5 : {
-                        permission = Permission.Control;
-                        break;
-                    } default : {
-                        permission = Permission.Read;
-                        break;
-                    }
-                }
-
-                resolve(permission.toLowerCase());
-            }
-        );
-    });
-}
+const askActions = async () => {
+    const answer = await askBasicQuestion(
+        'Enter actions to associate (comma separated). Options: read, write, append, create, control: '
+    );
+    return answer
+        .split(",")
+        .map(a => a.trim().toLowerCase())
+        .filter(a => a); // remove empty entries
+};
 
 const main = async () => {
-    console.log("To use default ENV vars, leave empty.")
-    
-    // ask user for webid, policy and rule names, target, associated action and assignee
+    console.log("To use default ENV vars, leave empty.");
+
     const webid = await askWebId() || defaultAssigner;
     const policy = await askPolicyName() || getRandomName();
-    const rule = await askRuleName() || getRandomName();
-    const action = await selectAction();
     const target = await askTargetURL() || getRandomResourceName();
     const assignee = await askAssigneeId() || defaultAssignee;
 
+    const actions = await askActions();
+
     rl.close();
 
-    // make POST request to the API
+    let rules: string[] = [];
+    let ruleRefs: string[] = [];
+
+    for (const action of actions) {
+        const rule = getRandomName();
+
+        rules.push(`
+        ex:${rule} a odrl:Permission ;
+                   odrl:action odrl:${action} ;
+                   odrl:target <${target}> ;
+                   odrl:assignee <${assignee}> ;
+                   odrl:assigner <${webid}> .`);
+
+        ruleRefs.push(`ex:${rule}`);
+    }
+
     const body = `
         @prefix ex: <http://example.org/>.
         @prefix odrl: <http://www.w3.org/ns/odrl/2/> .
         @prefix dct: <http://purl.org/dc/terms/>.
 
         ex:${policy} a odrl:Agreement ;
-                     odrl:uid ex:${policy} ;
-                     odrl:permission ex:${rule} .
-        ex:${rule} a odrl:Permission ;
-                   odrl:action odrl:${action} ;
-                   odrl:target <${target}> ;
-                   odrl:assignee <${assignee}> ;
-                   odrl:assigner <${webid}> .
-    `
+                     ${ruleRefs.map(r => `odrl:permission ${r} ;`).join("\n                     ")}
+                     odrl:uid ex:${policy} .
+        ${rules.join("\n")}
+    `;
 
     console.log(`\nPOST request with body\n${body}`);
 
-    const response = await fetch(`${process.env.AUTHORIZATION_SERVER || 'http://localhost:4000'}/uma/policies`, {
+    const response = await fetch(`${process.env.AUTHORIZATION_SERVER || 'http://localhost:4000/'}uma/policies`, {
         method: 'POST',
         headers: {
             'Authorization': `${webid}`,
@@ -110,10 +91,10 @@ const main = async () => {
     });
 
     if (response.ok) {
-        console.log('Policy added succesfully');
+        console.log('Policy added successfully');
     } else {
         console.log('Something went wrong! Try again.', response.status);
     }
-}
+};
 
-main()
+main();
