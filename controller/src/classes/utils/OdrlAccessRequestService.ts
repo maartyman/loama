@@ -38,8 +38,7 @@ export class ODRLAccessRequestService {
         if (response.status !== 201) throw new Error('failed to create access request');
     }
 
-    private accessRequestToTtl = async (accessRequest: AccessRequest): Promise<string> =>
-        `
+    private accessRequestToTtl = async (accessRequest: AccessRequest): Promise<string> => `
         @prefix ex: <http://example.org/> .
         @prefix sotw: <https://w3id.org/force/sotw#> .
         @prefix dcterms: <http://purl.org/dc/terms/> .
@@ -52,7 +51,6 @@ export class ODRLAccessRequestService {
                              sotw:requestedAction odrl:${accessRequest.action} ;
                              sotw:requestingParty <${accessRequest.requestingParty}> ;
                              ex:requestStatus ex:${accessRequest.status} ;
-                             odrl:uid ex:${accessRequest.uid} .
     `;
 
     /**
@@ -153,8 +151,7 @@ export class ODRLAccessRequestService {
                  sotw:requestedTarget ?target ;
                  sotw:requestedAction ?action ;
                  sotw:requestingParty <${requestingPartyID}> ;
-                 ex:requestStatus ?status ;
-                 odrl:uid ?uid .
+                 ex:requestStatus ?status .
         }
     `;
 
@@ -172,8 +169,7 @@ export class ODRLAccessRequestService {
                     sotw:requestedTarget ?target ;
                     sotw:requestedAction ?action ;
                     sotw:requestingParty ?requestingParty ;
-                    ex:requestStatus ?status ;
-                    odrl:uid ?uid .
+                    ex:requestStatus ?status .
         }
     `;
 }
