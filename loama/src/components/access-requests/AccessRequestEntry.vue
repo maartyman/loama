@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AccessRequest } from '@/lib/utils';
+import type { AccessRequest } from 'loama-controller';
 
 const props = defineProps<{
   request: AccessRequest
@@ -92,7 +92,7 @@ const props = defineProps<{
   border-radius: 0.5rem;
   font-size: 1rem;
   font-weight: 700;
-  text-transform: capitalize;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 

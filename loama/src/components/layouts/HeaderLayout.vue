@@ -1,9 +1,9 @@
 <template>
     <Suspense>
         <HeaderBase>
-            <HeaderTab class="header-tab" href="/home/" tooltip="check your resources" active>Resources</HeaderTab>
-            <HeaderTab class="header-tab" href="/access-requests/" tooltip="check your access requests or request access to a resource" active>Request Access</HeaderTab>
-            <HeaderTab class="header-tab" href="/access-grants/" tooltip="check incoming access requests and grant access to your resources" active>Grant Access</HeaderTab>
+            <HeaderTab class="header-tab" href="/home/" tooltip="manage your resources" active>Resources</HeaderTab>
+            <HeaderTab class="header-tab" href="/access-requests/" tooltip="manage your access requests or request access to a resource" active>Request Access</HeaderTab>
+            <HeaderTab class="header-tab" href="/access-grants/" tooltip="manage incoming access requests and grant access to your resources" active>Grant Access</HeaderTab>
         </HeaderBase>
     </Suspense>
     <router-view />

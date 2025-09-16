@@ -214,28 +214,25 @@ WHERE {}`)
         // 4: Delete the rule that has the matching target and permission for the matching assignee
         for (const policyId of policyIds.keys()) {
             for (const ruleId of policyIds.get(policyId)!) {
-                const deleteResponse = await fetch(UMA_URL(this.authorizationServerURL,`/${encodeURIComponent(policyId)}`), {
-                    method: "PATCH",
-                    headers: {
-                        'Authorization': webId,
-                        'Content-type': 'application/sparql-update',
-                    },
-                    body: `
+                const deleteResponse = await fetch(
+                    UMA_URL(this.authorizationServerURL, `/${encodeURIComponent(policyId)}`), {
+                        method: "PATCH",
+                        headers: {
+                            "Authorization": webId,
+                            "Content-type": "application/sparql-update",
+                        },
+                        body: `
 PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
 
 DELETE {
-  <${ruleId}> ?p ?o .
-  ?policy odrl:permission <${ruleId}> .
-}
-WHERE {
-  OPTIONAL {
     <${ruleId}> ?p ?o .
-  }
-  OPTIONAL {
     ?policy odrl:permission <${ruleId}> .
-  }
+} WHERE {
+    <${ruleId}> ?p ?o .
+    ?policy odrl:permission <${ruleId}> .
 }`
-                });
+                    }
+                );
 
                 if (!deleteResponse.ok) {
                     throw new Error(`Policy deletion failed: ${deleteResponse.status}`);

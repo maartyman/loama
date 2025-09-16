@@ -34,6 +34,11 @@ export interface IController<T extends Record<keyof T, BaseSubject<keyof T & str
     getResourcePermissionList(resourceUrl: string): Promise<ResourcePermissions<T[keyof T]>>
 
     isSubjectSupported<T extends string>(subject: BaseSubject<T>): IController<Record<T, BaseSubject<T>>>
+
+    // ! added for access requests
+    requestAccess(permission: { action: string, resource: string }): Promise<void>;
+    handleAccessRequest(requestId: string, status: string): Promise<void>;
+    getAccessRequests(): Promise<{ asRequestingParty: AccessRequest[]; asResourceOwner: AccessRequest[]; }>;
 }
 
 export interface IAccessRequest {
@@ -170,6 +175,15 @@ export interface IRule {
 
     // ID
     id: string;
+}
+
+// interface to represent access requests
+export interface AccessRequest {
+    uid: string;
+    target: string;
+    action: string;
+    requestingParty: string;
+    status: string;
 }
 
 // The interface to display the permissions for one subject on one target

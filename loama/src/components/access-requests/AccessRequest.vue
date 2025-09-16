@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { v4 as uuid } from 'uuid';
-import { ref } from 'vue';
-import { acceptedRequest, type AccessRequest, deniedRequest, request } from '@/lib/utils';
+import { onMounted, ref, type Ref } from 'vue';
+import type { AccessRequest } from 'loama-controller';
 import AccessRequestEntry from './AccessRequestEntry.vue';
+import { useControllerStore } from '@/stores/useControllerStore';
 
-const accessRequests = ref([request, acceptedRequest, deniedRequest]);
+const controllerStore = useControllerStore();
+
+const accessRequests: Ref<AccessRequest[]> = ref([]);
 
 const accessRequestParams = ref({
-  uid: '',
   target: '',
   action: '',
 });
@@ -26,25 +27,30 @@ const validate = () => {
 };
 
 const clear = () => {
-  accessRequestParams.value = { uid: '', target: '', action: '' };
+  accessRequestParams.value = { target: '', action: '' };
   mode.value = 'list';
   errors.value = { target: false, action: false };
 };
 
-const addAccessRequest = () => {
+const addAccessRequest = async () => {
   if (!validate()) return;
-
-  const newAccessRequest: AccessRequest = {
-    uid: uuid(),
-    target: accessRequestParams.value.target,
+  
+  await controllerStore.current.requestAccess({
     action: accessRequestParams.value.action,
-    requestingParty: 'https://solidweb.me/profile/card#me',
-    status: 'ex:requested',
-  };
+    resource: accessRequestParams.value.target
+  });
 
-  accessRequests.value.push(newAccessRequest);
-  clear();
+  accessRequests.value = await findAccessRequests();
+  mode.value = 'list';
 };
+
+const findAccessRequests = async (): Promise<AccessRequest[]> => {
+  return (await controllerStore.current.getAccessRequests()).asRequestingParty;
+}
+
+onMounted(async () => {
+  accessRequests.value = await findAccessRequests();
+});
 </script>
 
 <template>
@@ -70,6 +76,9 @@ const addAccessRequest = () => {
           <option value="" disabled>--pick a value--</option>
           <option value="read">read</option>
           <option value="write">write</option>
+          <option value="append">append</option>
+          <option value="create">create</option>
+          <option value="control">control</option>
         </select>
 
         <div class="actions">
@@ -78,15 +87,58 @@ const addAccessRequest = () => {
         </div>
       </div>
 
-      <div v-else key="list" class="card">
-        <h2>Your access requests</h2>
-        <AccessRequestEntry
-          v-for="request in accessRequests"
-          :request="request"
-          :key="request.uid"
-        />
-        <div class="actions">
-          <button class="primary" @click.prevent="mode = 'create'">new request</button>
+      <div v-else key="list" class="requests-list">
+        <div class="card header-card">
+          <h2>Your access requests</h2>
+          <button class="new-request-button" @click.prevent="mode = 'create'">new request</button>
+        </div>
+
+        <div class="card">
+          <h3>Requested</h3>
+          <div v-if="accessRequests.filter(r => r.status.toLowerCase() === 'requested').length">
+            <div
+              v-for="request in accessRequests.filter(r => r.status.toLowerCase() === 'requested')"
+              :key="request.uid"
+              class="access-request-item"
+            >
+              <AccessRequestEntry :request="request" />
+            </div>
+          </div>
+          <div v-else class="no-requests-message">
+            No pending requests at the moment.
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Accepted</h3>
+          <div v-if="accessRequests.filter(r => r.status.toLowerCase() === 'accepted').length">
+            <div
+              v-for="request in accessRequests.filter(r => r.status.toLowerCase() === 'accepted')"
+              :key="request.uid"
+              class="access-request-item"
+            >
+              <AccessRequestEntry :request="request" />
+            </div>
+          </div>
+          <div v-else class="no-requests-message">
+            No accepted requests.
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Denied</h3>
+          <div v-if="accessRequests.filter(r => r.status.toLowerCase() === 'denied').length">
+            <div
+              v-for="request in accessRequests.filter(r => r.status.toLowerCase() === 'denied')"
+              :key="request.uid"
+              class="access-request-item"
+            >
+              <AccessRequestEntry :request="request" />
+            </div>
+          </div>
+          <div v-else class="no-requests-message">
+            No denied requests.
+          </div>
         </div>
       </div>
     </transition>
@@ -114,10 +166,26 @@ const addAccessRequest = () => {
   gap: 1rem;
 }
 
+.header-card {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
 h2 {
   color: var(--solid-purple);
   font-weight: 700;
   font-size: 1.25rem;
+  margin: 0;
+}
+
+h3 {
+  color: var(--off-black);
+  font-weight: 600;
+  font-size: 1.1rem;
+  border-bottom: 1px solid var(--lama-gray);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 label {
@@ -148,6 +216,11 @@ select.error {
   background-color: #ffe6e9;
 }
 
+/* Each request entry */
+.access-request-item {
+  padding: 0.5rem 0;
+}
+
 /* Buttons */
 button {
   padding: 0.6rem 1.2rem;
@@ -158,11 +231,13 @@ button {
   transition: background-color 0.2s ease;
 }
 
-button.primary {
+button.primary,
+.new-request-button {
   background-color: var(--solid-purple);
   color: white;
 }
-button.primary:hover {
+button.primary:hover,
+.new-request-button:hover {
   background-color: #6b3be8;
 }
 
@@ -177,6 +252,19 @@ button.secondary:hover {
 .actions {
   display: flex;
   gap: 1rem;
+}
+
+.requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.no-requests-message {
+  color: var(--off-black);
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
 }
 
 /* Transition styles */

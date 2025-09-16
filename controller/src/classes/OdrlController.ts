@@ -1,9 +1,11 @@
 import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
 import { BaseSubject, Index, IndexItem, Permission, ResourcePermissions, Resources } from "../types";
 import { IAccessRequest, IController, IInboxConstructor, IStore, IStoreConstructor, SubjectConfig, SubjectConfigs, SubjectKey, SubjectType } from "../types/modules";
+import { type AccessRequest as AccessRequestObject } from "../types/modules";
 import { AccessRequest } from "./accessRequests/AccessRequest";
 import { ODRLAccessRequest } from "./accessRequests/OdrlAccessRequest";
 import { Mutex } from "./utils/Mutex";
+import { ODRLAccessRequestService } from "./utils/OdrlAccessRequestService";
 
 /**
  * Controller which makes it calls to the backend AS through ODRL requests.
@@ -14,15 +16,17 @@ export class ODRLController<T extends Record<keyof T, BaseSubject<keyof T & stri
     private resources: IStore<Resources>;
     private accessRequest: AccessRequest;
     private subjectConfigs: SubjectConfigs<T>;
+    private authorizationServerURL: string;
 
     // TODO : Find a better way of constructing the controller with all the different modules
-    constructor(storeConstructor: IStoreConstructor, inboxConstructor: IInboxConstructor, subjects: SubjectConfigs<T>) {
+    constructor(storeConstructor: IStoreConstructor, inboxConstructor: IInboxConstructor, subjects: SubjectConfigs<T>, authorizationServerURL: string) {
         super();
         // There is currently no "easy" solution to get around the as IStore...
         this.index = new storeConstructor("index.json", () => ({ id: "", items: [] })) as IStore<Index<T[keyof T & string]>>;
         this.resources = new storeConstructor("resources.json", () => ({ id: "", items: [] })) as IStore<Resources>;;
         this.accessRequest = new ODRLAccessRequest(this as unknown as ODRLController<{}>, inboxConstructor, this.resources);
         this.subjectConfigs = subjects;
+        this.authorizationServerURL = authorizationServerURL;
     }
 
     private getSubjectConfig<K extends SubjectKey<T>>(subject: T[K]): SubjectConfig<T, T[K]> {
@@ -149,5 +153,23 @@ export class ODRLController<T extends Record<keyof T, BaseSubject<keyof T & stri
             throw new Error(`Subject type ${subject.type} is not supported`);
         }
         return this as unknown as IController<Record<K, B>>
+    }
+
+    // ! added for access requests
+    async requestAccess(permission: { action: string; resource: string; }): Promise<void> {
+        const webid = getDefaultSession().info.webId!;
+        await new ODRLAccessRequestService(this.authorizationServerURL).requestAccess(permission.resource, webid, permission.action);
+    }
+
+    async handleAccessRequest(requestId: string, status: 'accepted' | 'denied'): Promise<void> {
+        const webid = getDefaultSession().info.webId!;
+        await new ODRLAccessRequestService(this.authorizationServerURL).acceptOrDenyAccess(requestId, webid, status);
+    }
+
+    async getAccessRequests(): Promise<{
+        asRequestingParty: AccessRequestObject[];
+        asResourceOwner: AccessRequestObject[];
+    }> {
+        return new ODRLAccessRequestService(this.authorizationServerURL).retrieveAccessRequests(getDefaultSession().info.webId!);
     }
 }

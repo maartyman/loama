@@ -23,6 +23,7 @@ export const createBasicController = (authorizationServerURL: string) => {
                 resolver: new PublicResolver(),
                 manager: new PublicManager(authorizationServerURL),
             },
-        }
+        },
+        authorizationServerURL
     )
 }
