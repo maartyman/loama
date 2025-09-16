@@ -101,7 +101,7 @@ onMounted(async () => {
               :key="request.uid"
               class="access-request-item"
             >
-              <AccessRequestEntry :request="request" />
+              <AccessRequestEntry :request="request" :show-id="false"/>
             </div>
           </div>
           <div v-else class="no-requests-message">
@@ -117,7 +117,7 @@ onMounted(async () => {
               :key="request.uid"
               class="access-request-item"
             >
-              <AccessRequestEntry :request="request" />
+              <AccessRequestEntry :request="request" :show-id="false"/>
             </div>
           </div>
           <div v-else class="no-requests-message">
@@ -133,7 +133,7 @@ onMounted(async () => {
               :key="request.uid"
               class="access-request-item"
             >
-              <AccessRequestEntry :request="request" />
+              <AccessRequestEntry :request="request" :show-id="false"/>
             </div>
           </div>
           <div v-else class="no-requests-message">

@@ -107,11 +107,11 @@ export class ODRLAccessRequestService {
         const policiesStore = new Store(this.parser.parse(policiesText));
 
         const requestingPartyBindings = await this.queryEngine.queryBindings(
-            this.accessRequestForRequestingParty, { sources: [requestsStore] }
+            this.accessRequestForRequestingParty(resourceOwnerOrRequestingPartyID), { sources: [requestsStore] }
         );
 
         const resourceOwnerBindings = await this.queryEngine.queryBindings(
-            this.accessRequestForResourceOwner, { sources: [requestsStore, policiesStore] }
+            this.accessRequestForResourceOwner(resourceOwnerOrRequestingPartyID), { sources: [requestsStore, policiesStore] }
         );
 
         return {
@@ -142,7 +142,7 @@ export class ODRLAccessRequestService {
         return (match ? match[1] : val).toLowerCase();
     }
 
-    private readonly accessRequestForRequestingParty = `
+    private readonly accessRequestForRequestingParty = (requestingPartyID: string): string => `
         PREFIX ex: <http://example.org/>
         PREFIX sotw: <https://w3id.org/force/sotw#>
         PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
@@ -152,13 +152,13 @@ export class ODRLAccessRequestService {
             ?uid a sotw:EvaluationRequest ;
                  sotw:requestedTarget ?target ;
                  sotw:requestedAction ?action ;
-                 sotw:requestingParty ?requestingParty ;
+                 sotw:requestingParty <${requestingPartyID}> ;
                  ex:requestStatus ?status ;
                  odrl:uid ?uid .
         }
     `;
 
-    private readonly accessRequestForResourceOwner = `
+    private readonly accessRequestForResourceOwner = (resourceOwnerID: string): string => `
         PREFIX ex: <http://example.org/>
         PREFIX sotw: <https://w3id.org/force/sotw#>
         PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
@@ -166,7 +166,7 @@ export class ODRLAccessRequestService {
         SELECT DISTINCT ?uid ?target ?action ?requestingParty ?status
         WHERE {
             ?policy odrl:target ?target ;
-                    odrl:assigner ?owner .
+                    odrl:assigner <${resourceOwnerID}> .
 
             ?uid a sotw:EvaluationRequest ;
                     sotw:requestedTarget ?target ;

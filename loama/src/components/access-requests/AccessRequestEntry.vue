@@ -1,17 +1,28 @@
 <script setup lang="ts">
 import type { AccessRequest } from 'loama-controller';
 
-const props = defineProps<{
-  request: AccessRequest
-}>();
+const props = withDefaults(defineProps<{
+  request: AccessRequest,
+  showId?: boolean
+}>(), {
+  showId: true
+});
+
 </script>
 
 <template>
   <div class="access-request-entry">
     <div class="request-info">
       <a :href="props.request.uid" target="_blank" class="request-uid">
-        {{ props.request.uid }}
+          {{ props.request.uid }}
       </a>
+      <template v-if="props.showId">
+        <div class="requesting-party">
+          <span class="label">by:</span>
+          <span class="value">{{ props.request.requestingParty }}</span>
+        </div>
+      </template>
+
       <div class="request-details">
         <span class="label">target:</span>
         <span class="value">{{ props.request.target }}</span>
@@ -61,6 +72,14 @@ const props = defineProps<{
   text-decoration: underline;
 }
 
+.requesting-party {
+  font-size: 0.95rem;
+  color: var(--off-black);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .request-details {
   font-size: 0.95rem;
   color: var(--off-black);
@@ -69,12 +88,14 @@ const props = defineProps<{
   gap: 0.5rem;
 }
 
-.request-details .label {
+.request-details .label,
+.requesting-party .label {
   font-weight: 600;
   color: var(--solid-purple);
 }
 
-.request-details .value {
+.request-details .value,
+.requesting-party .value {
   font-family: monospace;
   color: var(--off-black);
 }
