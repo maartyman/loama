@@ -25,7 +25,7 @@ onMounted(async () => {
   <div class="container">
     <div class="card header-card">
       <h2>Incoming access requests</h2>
-      <button @click="fetchAccessRequests" class="refresh-button">Refresh</button>
+      <button @click="fetchAccessRequests" class="refresh-button">refresh</button>
     </div>
 
     <div class="card">
@@ -165,19 +165,19 @@ button {
 }
 
 button.accept {
-  background-color: #3cc46c;
-  color: white;
+  background-color: #d4edda;
+  color: #155724;
 }
 button.accept:hover {
-  background-color: #2fa158;
+  background-color: #c2e0c9;
 }
 
 button.deny {
-  background-color: #e74c3c;
-  color: white;
+  background-color: #f8d7da;
+  color: #721c24;
 }
 button.deny:hover {
-  background-color: #c0392b;
+  background-color: #f5c6cb;
 }
 
 .no-requests-message {

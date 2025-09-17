@@ -40,16 +40,16 @@ const addAccessRequest = async () => {
     resource: accessRequestParams.value.target
   });
 
-  accessRequests.value = await findAccessRequests();
+  await fetchAccessRequests();
   mode.value = 'list';
 };
 
-const findAccessRequests = async (): Promise<AccessRequest[]> => {
-  return (await controllerStore.current.getAccessRequests()).asRequestingParty;
+const fetchAccessRequests = async (): Promise<void> => {
+  accessRequests.value = (await controllerStore.current.getAccessRequests()).asRequestingParty;
 }
 
 onMounted(async () => {
-  accessRequests.value = await findAccessRequests();
+  await fetchAccessRequests();
 });
 </script>
 
@@ -90,7 +90,10 @@ onMounted(async () => {
       <div v-else key="list" class="requests-list">
         <div class="card header-card">
           <h2>Your access requests</h2>
-          <button class="new-request-button" @click.prevent="mode = 'create'">new request</button>
+          <div class="buttons">
+            <button class="new-request-button" @click.prevent="mode = 'create'">new request</button>
+            <button @click="fetchAccessRequests" class="refresh-button">refresh</button>
+          </div>
         </div>
 
         <div class="card">
@@ -172,6 +175,14 @@ onMounted(async () => {
   align-items: center;
 }
 
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
 h2 {
   color: var(--solid-purple);
   font-weight: 700;
@@ -229,6 +240,14 @@ button {
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
+}
+
+.refresh-button {
+  background-color: var(--lama-gray);
+  color: var(--off-black);
+}
+.refresh-button:hover {
+  background-color: #bfbfbf;
 }
 
 button.primary,

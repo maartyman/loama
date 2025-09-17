@@ -50,7 +50,7 @@ export class ODRLAccessRequestService {
                              sotw:requestedTarget <${accessRequest.target}> ;
                              sotw:requestedAction odrl:${accessRequest.action} ;
                              sotw:requestingParty <${accessRequest.requestingParty}> ;
-                             ex:requestStatus ex:${accessRequest.status} ;
+                             ex:requestStatus ex:${accessRequest.status} .
     `;
 
     /**
