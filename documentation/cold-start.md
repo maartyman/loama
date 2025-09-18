@@ -1,7 +1,7 @@
 # The Cold Start Problem
 
 LOAMA allows users to manage their own user-managed policies for content access.
-It does this by communicating with the backend Authorization Server (AS) and adding rules or stripping them away from existing policies.
+It does this by communicating with the backend Authorization Server (AS) and adding/removing rules to policies.
 
 This approach introduces one problem: LOAMA cannot create new policies on resources from its user interface.
 We introduced a (temporary) script to help quickly set up policies on new resources.
