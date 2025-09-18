@@ -16,6 +16,7 @@ The script is straightforward in use, but allows for some customization.
 The example below illustrates its use:
 
 ```shell-session
+# start the script using "yarn cold"
 > yarn cold
 yarn run v1.22.22
 $ tsx --env-file=.env scripts/cold-start
