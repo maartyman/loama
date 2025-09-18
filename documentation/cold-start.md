@@ -66,6 +66,6 @@ RESOURCE_SERVER="http://localhost:3000/"
 AUTHORIZATION_SERVER="http://localhost:4000/"
 ```
 
-Notice the trailing slashes for the resource and authorization servers.
+NOTE: Trailing slashes are required for the resource and authorization servers. Not using it will cause the script to error.
 The script assumes that the policy endpoint is running under `/uma/policies`.
 Resources are always created under the `/resources` path.
