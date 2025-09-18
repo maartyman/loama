@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, type Ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 import type { AccessRequest } from 'loama-controller';
 import AccessRequestEntry from './AccessRequestEntry.vue';
 import { useControllerStore } from '@/stores/useControllerStore';
@@ -48,9 +48,14 @@ const fetchAccessRequests = async (): Promise<void> => {
   accessRequests.value = (await controllerStore.current.getAccessRequests()).asRequestingParty;
 }
 
+let interval: NodeJS.Timeout;
+
 onMounted(async () => {
   await fetchAccessRequests();
+  interval = setInterval(fetchAccessRequests, 10 ** 4);
 });
+
+onBeforeUnmount(() => clearInterval(interval));
 </script>
 
 <template>

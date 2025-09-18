@@ -135,6 +135,7 @@ WHERE {}`)
                 : this.postPolicy(webId, `
 @prefix odrl: <http://www.w3.org/ns/odrl/2/> .
 <${policyId}> a odrl:Agreement ;
+    odrl:uid <${policyId}> ;
     odrl:permission <${ruleId}> .
 
 <${ruleId}> a odrl:Permission ;
