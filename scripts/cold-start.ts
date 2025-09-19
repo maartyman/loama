@@ -47,8 +47,8 @@ const main = async () => {
     console.log("To use default ENV vars, leave empty.");
 
     const webid = await askWebId() || defaultAssigner;
-    const policy = await askPolicyName() || getRandomName();
-    const target = await askTargetURL() || getRandomResourceName();
+    const policy = await askPolicyName() || process.env.POLICY || getRandomName();
+    const target = await askTargetURL() || process.env.RESOURCE_URL || getRandomResourceName();
     const assignee = await askAssigneeId() || defaultAssignee;
 
     const actions = await askActions();
