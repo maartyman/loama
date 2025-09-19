@@ -1,7 +1,7 @@
 # The Cold Start Problem
 
 LOAMA allows users to manage their own user-managed policies for content access.
-It does this by communicating with the backend Authorization Server (AS) and adding rules or stripping them away from existing policies.
+It does this by communicating with the backend Authorization Server (AS) and adding/removing rules to policies.
 
 This approach introduces one problem: LOAMA cannot create new policies on resources from its user interface.
 We introduced a (temporary) script to help quickly set up policies on new resources.
@@ -16,6 +16,7 @@ The script is straightforward in use, but allows for some customization.
 The example below illustrates its use:
 
 ```shell-session
+# start the script using "yarn cold"
 > yarn cold
 yarn run v1.22.22
 $ tsx --env-file=.env scripts/cold-start
@@ -65,6 +66,6 @@ RESOURCE_SERVER="http://localhost:3000/"
 AUTHORIZATION_SERVER="http://localhost:4000/"
 ```
 
-Notice the trailing slashes for the resource and authorization servers.
+NOTE: Trailing slashes are required for the resource and authorization servers. Not using it will cause the script to error.
 The script assumes that the policy endpoint is running under `/uma/policies`.
 Resources are always created under the `/resources` path.
