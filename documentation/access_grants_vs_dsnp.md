@@ -135,7 +135,7 @@ After this, the resource should be accessible for the RP.
 
 ## Data Space Contract Negotiation Protocol flow
 
-This section explains the message flow for the second option: using the [Data Space Contract Negotiation Procotol](https://eclipse-dataspace-protocol-base.github.io/DataspaceProtocol/2025-1-RC4/#negotiation-protocol). Important to note is that this document is not an official W3C Membership consensus.
+This section explains the message flow for the second option: using the [Data Space Contract Negotiation Procotol](https://eclipse-dataspace-protocol-base.github.io/DataspaceProtocol/2025-1-RC4/#negotiation-protocol) (DSCNP). Important to note is that this document is not an official W3C Membership consensus.
 The examples below will make use of CURL to show the requests and headers, with the bodies specified in the `application/ld+json` format.
 
 ### Communicating Parties
