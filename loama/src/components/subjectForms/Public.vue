@@ -6,18 +6,20 @@
 
 <script setup lang="ts">
 import { usePodStore } from '@/lib/state';
-import { Permission, activeController } from 'loama-controller';
+import { useControllerStore } from '@/stores/useControllerStore';
+import { Permission } from 'loama-controller';
 import { useToast } from 'primevue/usetoast';
 
 const toast = useToast();
 const podStore = usePodStore();
+const controllerStore = useControllerStore();
 
 const onCreate = async () => {
     if (!podStore.selectedEntry) {
         console.error("No entry selected to add subject to!")
         return true;
     }
-    const entry = await activeController.getItem(podStore.selectedEntry.resourceUrl, {
+    const entry = await controllerStore.currentController.getItem(podStore.selectedEntry.resourceUrl, {
         type: "public",
     });
     if (entry) {
@@ -26,10 +28,10 @@ const onCreate = async () => {
         return true;
     }
     try {
-        await activeController.addPermission(podStore.selectedEntry.resourceUrl, Permission.Read, {
+        await controllerStore.currentController.addPermission(podStore.selectedEntry.resourceUrl, Permission.Read, {
             type: "public"
         })
-        await podStore.refreshEntryPermissions();
+        await podStore.refreshEntryPermissions(controllerStore.currentController);
         return true;
     } catch (e) {
         console.error(e)

@@ -26,4 +26,4 @@ export const allPermissions = [
     Permission.Append,
     Permission.Control,
     Permission.Create,
-]
+];

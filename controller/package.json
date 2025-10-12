@@ -24,11 +24,13 @@
         "node": ">= 20"
     },
     "dependencies": {
+        "@comunica/query-sparql": "^4.3.0",
         "@inrupt/solid-client": "^2.0.1",
         "@inrupt/solid-client-authn-browser": "^2.2.4",
         "@inrupt/vocab-common-rdf": "^1.0.5",
         "core-js": "^3.38.1",
-        "loama-common": "^1.0.0"
+        "loama-common": "^1.0.0",
+        "n3": "^1.26.0"
     },
     "devDependencies": {
         "@types/core-js": "^2.5.8",

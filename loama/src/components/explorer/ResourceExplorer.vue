@@ -1,7 +1,8 @@
 <template>
     <div class="panel-container">
         <div class="left-panel">
-            <ExplorerBreadcrumbs />
+            <Button @click="refresh">Refresh</Button> <!-- let the user refresh manually without pressing F5 in order to retrieve new resources -->
+            <ExplorerBreadcrumbs /> 
             <ExplorerEntry v-for="resource in podStore.formattedEntries" :key="resource.resourceUrl"
                 @click="changeSelectedEntry(resource)" :isContainer="resource.isContainer" :authProtected="false"
                 :url="resource.name + '/'">{{ resource.name }}
@@ -22,19 +23,22 @@
 </template>
 
 <script setup lang="ts">
+import Button from 'primevue/button';
 import { store } from 'loama-app'
-import { watch } from "vue";
+import { onBeforeUnmount, onMounted, watch } from "vue";
 import ExplorerEntry from "./ExplorerEntry.vue";
 import { useRoute } from "vue-router";
 import ExplorerBreadcrumbs from "./ExplorerBreadcrumbs.vue";
 import type { Entry } from "@/lib/types";
 import { usePodStore } from '@/lib/state';
 import SelectedEntry from './SelectedEntry.vue';
+import { useControllerStore } from '@/stores/useControllerStore';
 
 const route = useRoute();
 const podStore = usePodStore();
+const controllerStore = useControllerStore()
 
-await podStore.loadResources(store.usedPod)
+await podStore.loadResources(store.usedPod, controllerStore.current);
 
 const changeSelectedEntry = (entry: Entry | null) => podStore.selectedEntry = entry;
 
@@ -42,7 +46,24 @@ const fileUrl = (path: string | string[]) => `${store.usedPod}${path}`
 
 watch(() => route.params.filePath, async (path) => {
     podStore.selectedEntry = null;
-    podStore.loadResources(fileUrl(path));
+    podStore.loadResources(fileUrl(path), controllerStore.current);
+})
+
+// refresh the resources to show in the panel
+const refresh = async () => {
+    await podStore.loadResources(store.usedPod, controllerStore.current);
+};
+
+let interval: NodeJS.Timeout;
+
+// introduce autorefresh every 10 seconds
+onMounted(() => {
+    interval = setInterval(refresh, 10 ** 4);
+});
+
+// clear auto refreshing interval
+onBeforeUnmount(() => {
+    clearInterval(interval);
 })
 
 </script>
@@ -69,8 +90,8 @@ i {
 
 .panel-container {
     display: flex;
-    height: calc(100vh - var(--base-unit)*13);
-    width: 100vw;
+    height: calc(100vh - var(--base-unit)*14);
+    width: 100%;
 }
 
 .left-panel,
