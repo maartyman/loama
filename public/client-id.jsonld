@@ -1,14 +1,15 @@
 {
   "@context": "https://www.w3.org/ns/solid/oidc-context.jsonld",
-  "client_id": "http://localhost:5173/client-id.jsonld",
+  "client_id": "https://maartyman.github.io/loama/client-id.jsonld",
   "client_name": "LOAMA",
   "redirect_uris": [
-    "http://localhost:5173/home/",
-    "http://localhost:5173/access-requests/",
-    "http://localhost:5173/policies/"
+    "https://maartyman.github.io/loama/home/",
+    "https://maartyman.github.io/loama/access-requests/",
+    "https://maartyman.github.io/loama/access-grants/",
+    "https://maartyman.github.io/loama/policies/"
   ],
   "post_logout_redirect_uris": [
-    "http://localhost:5173/"
+    "https://maartyman.github.io/loama/"
   ],
   "uma_profiles_supported": [
     "https://spec.knows.idlab.ugent.be/A4DS/L1"

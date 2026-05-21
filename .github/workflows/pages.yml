@@ -38,6 +38,11 @@ jobs:
         run: npm run build
         env:
           VITE_BASE: /loama/
+          VITE_DEFAULT_IDP: https://solidcommunity.net
+          VITE_CLIENT_ID_URL: https://maartyman.github.io/loama/client-id.jsonld
+
+      - name: Add Vue Router fallback
+        run: cp dist/index.html dist/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

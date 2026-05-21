@@ -14,6 +14,10 @@ export function normalizeIdentityProviderUrl(value: string): string {
     throw new Error(`Unsupported identity provider protocol: ${issuerUrl.protocol}`);
   }
 
+  if (window.location.protocol === 'https:' && issuerUrl.protocol === 'http:' && !isLocalhostUrl(issuerUrl.host)) {
+    throw new Error('HTTP identity providers cannot be used from an HTTPS page.');
+  }
+
   issuerUrl.hash = '';
   issuerUrl.search = '';
 

@@ -43,7 +43,7 @@ const emit = defineEmits<{
 }>()
 
 const solidPodUrl = ref<string>('');
-const defaultSolidPodUrl = import.meta.env.VITE_DEFAULT_IDP;
+const defaultSolidPodUrl = import.meta.env.VITE_DEFAULT_IDP || 'https://solidcommunity.net';
 const showWarning = ref<boolean>(false);
 const isLoading = ref<boolean>(false);
 
