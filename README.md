@@ -1,98 +1,52 @@
-# Loama
+# LOAMA
 
-![Crest](https://github.com/user-attachments/assets/b083b4d0-f655-4385-9a6e-08c632b860b7)
+LOAMA is a Linked Open Access Management App, written in Vue.
 
-This repository contains multiple projects. To get them running, go through them individually
+## IDP Provider
 
-## Controller `./controller`
+Authentication works by providing the URL to the pod provider. To ease the experience a default URL is used, this is specified in the `.env` and used in `components/LoginForm.vue`. An example can be found in `.env.example`.
 
-The base functionality for...
+## How to run
 
-## Loama `./loama`
+```sh
+# Install dependencies
+yarn
 
-The access management app
-
-## Mockbook `./mockbook`
-
-A first demo application to showcase Loama.
-MockBook is a social network that allows users to view their posts and friends.
-
-**Data**
-
-- profile: name, email, bio, profile picture
-- posts: text, image, video
-- friends: list of friends
-
-## Doctorapp `./doctorapp`
-
-A second demo application to showcase Loama.
-DoctorApp is a medical app that allows you to view your doctor appointments.
-
-**Data**
-
-- information: name, email, phone number
-- appointments: date, time
-
-## solid-common-lib `./solid-common-lib`
-
-All common functionalities across controller, loama, or (demo) applications
-
-## solid-app-lib `./solid-app-lib`
-
-All common functionalities across (demo) applications,
-relies on solid-common-lib.
-
-## Getting started
-
-### Prerequisites
-
-- Node >= 20
-- Yarn >= 1.22.x
-
-### Environment variables
-
-The apps are configurable by means of some environment variables.
-
-The environment variables are read from `.env[.mode]` files as [documented by Vite](https://v2.vitejs.dev/config/#environment-variables).
-
-Each app has a file `.env.example` showing the possibilities.
-You may copy it to e.g. `.env` in the same directory and modify it to your needs.
-
-One environment variable is common to all apps: `VITE_BASE`, allowing to run the app in a URL with a path.
-The loama `.env.example` file would result in the loama app running at e.g. `http://localhost:5173/loama/`.
-Very useful for running this app behind a reverse proxy!
-
-### Development setup
-
-We use yarn workspaces to manage our dependencies of all the subprojects.
-
-Run `yarn` or `yarn install` to get all the dependencies.
-
-Do this before starting loama a very first time after installation:
-
-```bash
-# terminate all yarn dev commands below with <Ctrl-C> as soon as they display "Found 0 errors. Watching for file changes."
-cd ./solid-common-lib/
+# Compile and Hot-Reload for Development
 yarn dev
-cd ../solid-app-lib/
-yarn dev
-cd ../controller/
-yarn dev
+
+# Build for production
+yarn build
+
 ```
 
-To start the dev server for loama and its dependencies:
+## How to execute automated tests for this project
 
-```bash
-yarn dev
-```
+> [!NOTE]
+> These tests are not 100% reproducible, so for the time being they are not in GitHub CI. See also `.github/workflows/playwright.yml.disabled` (mind the "disabled" in the filename).
 
-This makes use of [nx](https://nx.dev) to run a job in multiple projects.
+- Open a terminal in the root of this repo
+- Run `yarn` to install all dependencies
+- Run `yarn build` to build the app
+- Run `yarn playwright install --with-deps` to install the headless browsers + system dependencies
+- Now you are ready to run the test suite `yarn test`, this will spin-up a preview server on port 4173 & a CSS on port 8080. Make sure nothing else is running on these ports as playwright will otherwise think those services are the services it tries to start
 
-Now you can find loama at <http://localhost:5173>, or in a URL with a path, if you configured so in your `.env` as explained above.
+> [!NOTE]
+> These test are created with the assumption that the solid server adds some basic files to the pods like the README and profile/card
 
-### Using your own SOLID pod
+### How to manually test this project
 
-1. `mkdir -p css/data`: The CSS uses filesystem-based storage
-2. `docker compose up -d --wait`
-
-This will spin up a Community Solid Server on port 3000.
+- Login with a valid IDP
+- Select a file (I've mostly used the README file)
+- In the right column, click the "Edit" button. This should open a drawer. 
+  This drawer should contain a table with all the subjects who have access to the file
+- Click the "New Subject" to give a new subject access. This will again open a new smaller drawer where you can select the subject type
+- Select "WebId" and give a webId which already has been added to the ACL file/table (e.g. your own webId)
+- This should give an error in the console + a toast notification that the webId has been added previously
+- Now use a webId which isn't present in the ACL file/table
+- Click on the "Create" button, the Drawer should close & the new webId should be visible in the table
+- Now choose one of the entries in the table & hit the "Edit" button at the end of the row
+- Grant a new permission by checking the checkbox in the new drawer that should've opened.
+- When you close this drawer. You'll see that your changes are reflected in the table (give it a second to reload the data)
+- You can do multiple grants/revokes at once in the "edit subject" drawer
+  - If you do them too fast after each other the inrupt SDK will freak out and skip some changes to the ACL file which will result in a desync between the ACL & the index.json

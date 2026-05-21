@@ -1,26 +1,62 @@
 {
+    "name": "loama",
+    "version": "0.0.0",
     "private": true,
-    "workspaces": [
-        "controller",
-        "solid-app-lib",
-        "solid-common-lib",
-        "loama",
-        "doctorapp",
-        "mockbook"
-    ],
+    "type": "module",
     "scripts": {
-        "build": "nx run-many -t build",
-        "dev": "nx run-many --parallel=5 --exclude=doctorapp,mockbook -t dev",
-        "cold": "tsx --env-file=.env scripts/cold-start"
+        "dev": "vite",
+        "build": "vue-tsc -b && vite build",
+        "preview": "vite preview",
+        "type-check": "vue-tsc --build --force",
+        "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+        "format": "prettier --write src/",
+        "lint:ci": "eslint . --config .eslintrc.cjs --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --format node_modules/eslint-formatter-markdown/markdown.js",
+        "test": "playwright test",
+        "test:interactive": "playwright test --ui",
+        "pods:start": "community-solid-server -c @css:config/file.json --seedConfig ./tests/fixtures/css-seeds.json -f pods -p 8080",
+        "pods:reset": "rimraf pods"
     },
-    "devDependencies": {
-        "nx": "19.6.0",
-        "tsx": "^4.20.5"
+    "engines": {
+        "node": "^20.0.0 || ^22.0.0"
     },
     "dependencies": {
-        "@solid/community-server": "^7.1.2",
-        "rimraf": "^6.0.1",
-        "uuid": "^11.1.0"
+        "@comunica/query-sparql": "^4.3.0",
+        "@inrupt/solid-client": "^2.1.0",
+        "@inrupt/solid-client-authn-browser": "^2.2.4",
+        "@inrupt/vocab-common-rdf": "^1.0.5",
+        "@phosphor-icons/vue": "^2.2.1",
+        "@primevue/themes": "^4.1.1",
+        "@vueform/multiselect": "^2.6.9",
+        "core-js": "^3.38.1",
+        "dotenv": "^17.2.1",
+        "n3": "^1.26.0",
+        "pinia": "^2.2.2",
+        "primevue": "^4.1.1",
+        "trustflows-client": "^0.1.0-alpha.0",
+        "vite-svg-loader": "^5.1.0",
+        "vue": "^3.4.29",
+        "vue-router": "^4.3.3"
     },
-    "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+    "devDependencies": {
+        "@playwright/test": "^1.50.1",
+        "@rushstack/eslint-patch": "^1.8.0",
+        "@solid/community-server": "^7.1.2",
+        "@tsconfig/node20": "^20.1.4",
+        "@types/core-js": "^2.5.8",
+        "@types/node": "^20.14.5",
+        "@vitejs/plugin-vue": "^5.0.5",
+        "@vue/eslint-config-prettier": "^9.0.0",
+        "@vue/eslint-config-typescript": "^13.0.0",
+        "@vue/tsconfig": "^0.5.1",
+        "eslint": "^8.57.0",
+        "eslint-formatter-markdown": "^1.0.4",
+        "eslint-plugin-vue": "^9.23.0",
+        "prettier": "^3.2.5",
+        "rimraf": "^6.0.1",
+        "sass-embedded": "^1.77.8",
+        "typescript": "~5.4.0",
+        "vite": "^5.3.1",
+        "vite-plugin-vue-devtools": "^7.3.1",
+        "vue-tsc": "^2.0.21"
+    }
 }
