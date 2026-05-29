@@ -9,81 +9,69 @@ const accessRequests: Ref<AccessRequest[]> = ref([]);
 
 const updateStatus = async (requestID: string, status: 'accepted' | 'denied') => {
   await controllerStore.current.handleAccessRequest(requestID, status);
-  await fetchAccessRequests();
+  accessRequests.value = accessRequests.value.map((request) =>
+    request.uid === requestID ? { ...request, status } : request
+  );
 };
 
-const fetchAccessRequests = async () => {
-  accessRequests.value = (await controllerStore.current.getAccessRequests()).asResourceOwner;
+const fetchAccessRequests = async (onlyRequested = false) => {
+  const requests = (await controllerStore.current.getAccessRequests()).asResourceOwner;
+  accessRequests.value = onlyRequested ? requests.filter(isRequested) : requests;
 };
+
+const statusLabel = (request: AccessRequest) => request.status.split(':').pop();
+const statusClass = (request: AccessRequest) => request.status.toLowerCase();
+const isRequested = (request: AccessRequest) => statusClass(request).includes('requested');
 
 let interval: NodeJS.Timeout;
 
 onMounted(async () => {
-  await fetchAccessRequests();
+  await fetchAccessRequests(true);
   interval = setInterval(fetchAccessRequests, 10 ** 4);
 });
 
-onBeforeUnmount(() => clearInterval(interval));
+onBeforeUnmount(() => {
+  clearInterval(interval);
+  accessRequests.value = accessRequests.value.filter(isRequested);
+});
 </script>
 
 <template>
   <div class="container">
     <div class="card header-card">
       <h2>Incoming access requests</h2>
-      <button @click="fetchAccessRequests" class="refresh-button">refresh</button>
+      <button @click="fetchAccessRequests()" class="refresh-button">refresh</button>
     </div>
 
     <div class="card">
-      <h3>Requested</h3>
-      <div v-if="accessRequests.filter(r => r.status.toLowerCase() === 'requested').length">
+      <div v-if="accessRequests.length" class="access-request-list">
         <div
-          v-for="request in accessRequests.filter(r => r.status.toLowerCase() === 'requested')"
+          v-for="request in accessRequests"
           :key="request.uid"
           class="access-request-item"
         >
-          <AccessRequestEntry :request="request" />
-          <div class="actions">
-            <button class="accept" @click="updateStatus(request.uid, 'accepted')">
-              Accept
-            </button>
-            <button class="deny" @click="updateStatus(request.uid, 'denied')">Deny</button>
-          </div>
+          <AccessRequestEntry :request="request" :show-status="false">
+            <div v-if="isRequested(request)" class="actions">
+              <button class="accept" @click="updateStatus(request.uid, 'accepted')">
+                Accept
+              </button>
+              <button class="deny" @click="updateStatus(request.uid, 'denied')">Deny</button>
+            </div>
+            <span
+              v-else
+              class="status-badge"
+              :class="{
+                accepted: statusClass(request).includes('accepted'),
+                denied: statusClass(request).includes('denied'),
+              }"
+            >
+              {{ statusLabel(request) }}
+            </span>
+          </AccessRequestEntry>
         </div>
       </div>
       <div v-else class="no-requests-message">
-        No new access requests at the moment.
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Accepted</h3>
-      <div v-if="accessRequests.filter(r => r.status.toLowerCase() === 'accepted').length">
-        <div
-          v-for="request in accessRequests.filter(r => r.status.toLowerCase() === 'accepted')"
-          :key="request.uid"
-          class="access-request-item"
-        >
-          <AccessRequestEntry :request="request" />
-        </div>
-      </div>
-      <div v-else class="no-requests-message">
-        No accepted requests.
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Denied</h3>
-      <div v-if="accessRequests.filter(r => r.status.toLowerCase() === 'denied').length">
-        <div
-          v-for="request in accessRequests.filter(r => r.status.toLowerCase() === 'denied')"
-          :key="request.uid"
-          class="access-request-item"
-        >
-          <AccessRequestEntry :request="request" />
-        </div>
-      </div>
-      <div v-else class="no-requests-message">
-        No denied requests.
+        No access requests at the moment.
       </div>
     </div>
   </div>
@@ -123,26 +111,15 @@ h2 {
   margin: 0;
 }
 
-h3 {
-  color: var(--off-black);
-  font-weight: 600;
-  font-size: 1.1rem;
-  border-bottom: 1px solid var(--lama-gray);
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
 /* Each request entry */
-.access-request-item {
+.access-request-list {
   display: flex;
-  justify-content: space-between; /* puts actions at the side */
-  align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 0;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.access-request-item > :first-child {
-  flex: 1; /* let entry expand, keep actions compact */
+.access-request-item {
+  padding: 0.5rem 0;
 }
 
 .actions {
@@ -183,6 +160,25 @@ button.deny {
 }
 button.deny:hover {
   background-color: #f5c6cb;
+}
+
+.status-badge {
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-badge.accepted {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.denied {
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
 .no-requests-message {

@@ -6,10 +6,15 @@
     "https://maartyman.github.io/loama/home/",
     "https://maartyman.github.io/loama/access-requests/",
     "https://maartyman.github.io/loama/access-grants/",
-    "https://maartyman.github.io/loama/policies/"
+    "https://maartyman.github.io/loama/policies/",
+    "http://localhost:5173/home/",
+    "http://localhost:5173/access-requests/",
+    "http://localhost:5173/access-grants/",
+    "http://localhost:5173/policies/"
   ],
   "post_logout_redirect_uris": [
-    "https://maartyman.github.io/loama/"
+    "https://maartyman.github.io/loama/",
+    "http://localhost:5173/"
   ],
   "uma_profiles_supported": [
     "https://spec.knows.idlab.ugent.be/A4DS/L1"

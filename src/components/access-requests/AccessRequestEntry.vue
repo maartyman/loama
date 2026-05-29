@@ -3,9 +3,11 @@ import type { AccessRequest } from 'loama-controller';
 
 const props = withDefaults(defineProps<{
   request: AccessRequest,
-  showId?: boolean
+  showId?: boolean,
+  showStatus?: boolean
 }>(), {
-  showId: true
+  showId: true,
+  showStatus: true
 });
 
 </script>
@@ -31,6 +33,7 @@ const props = withDefaults(defineProps<{
       </div>
     </div>
     <span
+      v-if="props.showStatus"
       class="status-badge"
       :class="{
         requested: props.request.status.includes('requested'),
@@ -40,6 +43,7 @@ const props = withDefaults(defineProps<{
     >
       {{ props.request.status.split(':').pop() }}
     </span>
+    <slot />
   </div>
 </template>
 
