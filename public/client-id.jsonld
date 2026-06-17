@@ -1,6 +1,6 @@
 {
   "@context": "https://www.w3.org/ns/solid/oidc-context.jsonld",
-  "client_id": "https://maartyman.github.io/loama/client-id.jsonld",
+  "client_id": "http://localhost:5173/client-id.jsonld",
   "client_name": "LOAMA",
   "redirect_uris": [
     "https://maartyman.github.io/loama/home/",
