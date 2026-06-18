@@ -115,6 +115,21 @@ export function findFirstAssetNode(nodes: AssetTreeNode[]): AssetTreeNode | null
   return null;
 }
 
+export function buildAssetLabelMap(assets: ResourceOwnerAsset[]): Map<string, string> {
+  const labels = new Map<string, string>();
+
+  for (const node of flattenVisibleAssetTree(buildAssetTree(assets))) {
+    if (!node.targetId) continue;
+
+    labels.set(node.targetId, node.label);
+    for (const alias of node.targetAliases) {
+      labels.set(alias, node.label);
+    }
+  }
+
+  return labels;
+}
+
 function assetToNode(asset: ResourceOwnerAsset, url: string, label: string, depth: number): AssetTreeNode {
   return {
     id: `asset:${asset._id}:${url}`,

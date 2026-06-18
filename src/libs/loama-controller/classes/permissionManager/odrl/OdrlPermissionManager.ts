@@ -110,9 +110,28 @@ export abstract class ODRLPermissionManager<T extends Record<keyof T, BaseSubjec
 
 
         if (target) {
-            const subjectPermissions: SubjectPermissions<T[K]>[] = [];
+            const subjectPermissionsByKey = new Map<string, SubjectPermissions<T[K]>>();
+            const addSubjectPermissions = (entry: SubjectPermissions<T[K]>) => {
+                const key = entry.subject.type === 'webId'
+                    ? `${entry.subject.type}:${entry.subject.selector?.url ?? ''}`
+                    : entry.subject.type;
+                const existingEntry = subjectPermissionsByKey.get(key);
+
+                if (!existingEntry) {
+                    subjectPermissionsByKey.set(key, {
+                        ...entry,
+                        permissions: [...new Set(entry.permissions)],
+                    });
+                    return;
+                }
+
+                existingEntry.permissions = [...new Set([...existingEntry.permissions, ...entry.permissions])];
+                existingEntry.isEnabled = existingEntry.isEnabled || entry.isEnabled;
+                existingEntry.targetId = existingEntry.targetId ?? entry.targetId;
+            };
+
             // Add the owner information
-            subjectPermissions.push({
+            addSubjectPermissions({
                 subject: {
                     type: "webId",
                     selector: { url: target.assigner }
@@ -123,7 +142,7 @@ export abstract class ODRLPermissionManager<T extends Record<keyof T, BaseSubjec
             })
 
             // Add the public information
-            if (target.public && target.public.permissions.size > 0) subjectPermissions.push({
+            if (target.public && target.public.permissions.size > 0) addSubjectPermissions({
                 subject: {
                     type: "public",
                 } as unknown as T[K],
@@ -134,7 +153,7 @@ export abstract class ODRLPermissionManager<T extends Record<keyof T, BaseSubjec
 
             // Add the private subjects
             if (target.private) target.private.forEach(subject => {
-                if (subject.permissions.size > 0) subjectPermissions.push({
+                if (subject.permissions.size > 0) addSubjectPermissions({
                     subject: {
                         type: "webId",
                         selector: { url: subject.subject }
@@ -144,7 +163,7 @@ export abstract class ODRLPermissionManager<T extends Record<keyof T, BaseSubjec
                     targetId: target.targetUrl
                 })
             })
-            return subjectPermissions;
+            return [...subjectPermissionsByKey.values()];
         }
 
         return [];

@@ -78,6 +78,7 @@ export class PolicyInterpreter {
                         break;
 
                     case "write":
+                    case "modify":
                         permissions.push(Permission.Write);
                         break;
 

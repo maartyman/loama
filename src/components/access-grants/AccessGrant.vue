@@ -3,9 +3,11 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 import AccessRequestEntry from '../access-requests/AccessRequestEntry.vue';
 import type { AccessRequest } from 'loama-controller';
 import { useControllerStore } from '@/stores/useControllerStore';
+import { buildAssetLabelMap } from '@/lib/assetTree';
 
 const controllerStore = useControllerStore();
 const accessRequests: Ref<AccessRequest[]> = ref([]);
+const resourceLabels: Ref<Map<string, string>> = ref(new Map());
 
 const updateStatus = async (requestID: string, status: 'accepted' | 'denied') => {
   await controllerStore.current.handleAccessRequest(requestID, status);
@@ -17,11 +19,21 @@ const updateStatus = async (requestID: string, status: 'accepted' | 'denied') =>
 const fetchAccessRequests = async (onlyRequested = false) => {
   const requests = (await controllerStore.current.getAccessRequests()).asResourceOwner;
   accessRequests.value = onlyRequested ? requests.filter(isRequested) : requests;
+
+  try {
+    const assets = await controllerStore.current.getManageableAssets({
+      include: ['description', 'scopes', 'policy_uri']
+    });
+    resourceLabels.value = buildAssetLabelMap(assets);
+  } catch (error) {
+    console.error('Failed to load manageable asset names for access requests', error);
+  }
 };
 
 const statusLabel = (request: AccessRequest) => request.status.split(':').pop();
 const statusClass = (request: AccessRequest) => request.status.toLowerCase();
 const isRequested = (request: AccessRequest) => statusClass(request).includes('requested');
+const targetName = (request: AccessRequest) => resourceLabels.value.get(request.target) ?? request.target;
 
 let interval: NodeJS.Timeout;
 
@@ -50,7 +62,7 @@ onBeforeUnmount(() => {
           :key="request.uid"
           class="access-request-item"
         >
-          <AccessRequestEntry :request="request" :show-status="false">
+          <AccessRequestEntry :request="request" :target-name="targetName(request)" :show-status="false">
             <div v-if="isRequested(request)" class="actions">
               <button class="accept" @click="updateStatus(request.uid, 'accepted')">
                 Accept

@@ -3,6 +3,7 @@ import type { AccessRequest } from 'loama-controller';
 
 const props = withDefaults(defineProps<{
   request: AccessRequest,
+  targetName?: string,
   showId?: boolean,
   showStatus?: boolean
 }>(), {
@@ -10,14 +11,13 @@ const props = withDefaults(defineProps<{
   showStatus: true
 });
 
+const scopeLabel = (scope: string) => scope.split(/[/:#]/u).filter(Boolean).at(-1)?.toLowerCase() ?? scope;
+
 </script>
 
 <template>
   <div class="access-request-entry">
     <div class="request-info">
-      <a :href="props.request.uid" target="_blank" class="request-uid">
-          {{ props.request.uid }}
-      </a>
       <template v-if="props.showId">
         <div class="requesting-party">
           <span class="label">by:</span>
@@ -27,9 +27,9 @@ const props = withDefaults(defineProps<{
 
       <div class="request-details">
         <span class="label">target:</span>
-        <span class="value">{{ props.request.target }}</span>
+        <span class="value">{{ props.targetName ?? props.request.target }}</span>
         <span class="label">action:</span>
-        <span class="value action">{{ props.request.action }}</span>
+        <span class="value action">{{ scopeLabel(props.request.action) }}</span>
       </div>
     </div>
     <span
@@ -64,16 +64,6 @@ const props = withDefaults(defineProps<{
   flex-direction: column;
   gap: 0.25rem;
   max-width: 70%;
-}
-
-.request-uid {
-  color: var(--solid-purple);
-  font-weight: 600;
-  text-decoration: none;
-  word-break: break-all;
-}
-.request-uid:hover {
-  text-decoration: underline;
 }
 
 .requesting-party {
