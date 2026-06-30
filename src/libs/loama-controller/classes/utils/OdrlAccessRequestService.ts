@@ -65,8 +65,9 @@ export class ODRLAccessRequestService {
         resourceOwner: string,
         status: 'accepted' | 'denied'
     ): Promise<void> => {
+        const routeId = this.accessRequestRouteId(accessRequestID);
         const response = await fetch(
-            `${this.authorizationServerURL}/requests/${encodeURIComponent(accessRequestID)}`, {
+            `${this.authorizationServerURL}/requests/${encodeURIComponent(routeId)}`, {
                 method: 'PATCH',
                 headers: {
                     'authorization': await getBearerAuthorizationHeader(),
@@ -174,4 +175,12 @@ export class ODRLAccessRequestService {
                     ex:requestStatus ?status .
         }
     `;
+
+    private readonly accessRequestRouteId = (accessRequestID: string): string => {
+        try {
+            return new URL(accessRequestID).pathname.split('/').filter(Boolean).pop() ?? accessRequestID;
+        } catch {
+            return accessRequestID.split(/[\/#]/u).filter(Boolean).pop() ?? accessRequestID;
+        }
+    };
 }
