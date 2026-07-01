@@ -25,15 +25,16 @@ export function buildAssetTree(assets: ResourceOwnerAsset[]): AssetTreeNode[] {
 
   for (const asset of assets) {
     const assetUrl = getAssetResourceUrl(asset);
+    const assetName = getAssetName(asset);
 
     if (!assetUrl) {
-      roots.push(assetToNode(asset, asset._id, asset.description?.name || asset._id, 0));
+      roots.push(assetToNode(asset, assetName || asset._id, assetName || asset._id, 0));
       continue;
     }
 
     const parsedUrl = parseUrl(assetUrl);
     if (!parsedUrl) {
-      roots.push(assetToNode(asset, asset._id, asset.description?.name || asset._id, 0));
+      roots.push(assetToNode(asset, assetUrl, assetName || assetUrl, 0));
       continue;
     }
 
@@ -84,7 +85,7 @@ export function buildAssetTree(assets: ResourceOwnerAsset[]): AssetTreeNode[] {
     const siblings = pathSegments.length > 1
       ? folders.get(folderUrlFor(parsedUrl, pathSegments.slice(0, -1)))?.children ?? roots
       : roots;
-    const leafLabel = pathSegments.at(-1) || asset.description?.name || asset._id;
+    const leafLabel = pathSegments.at(-1) || getAssetName(asset) || asset._id;
     siblings.push(assetToNode(asset, parsedUrl.toString().replace(/\/$/u, ''), leafLabel, pathSegments.length - 1));
   }
 
@@ -155,10 +156,13 @@ function attachAssetToNode(node: AssetTreeNode, asset: ResourceOwnerAsset) {
 function assetAliases(asset: ResourceOwnerAsset, nodeUrl?: string): string[] {
   const policyUri = asset.policy?.policy_uri;
   const resourceUrl = getAssetResourceUrl(asset);
+  const assetName = getAssetName(asset);
   const nodeUrlWithoutTrailingSlash = nodeUrl?.replace(/\/$/u, '');
 
   return [
     asset._id,
+    assetName,
+    assetName?.replace(/\/$/u, ''),
     resourceUrl,
     resourceUrl?.replace(/\/$/u, ''),
     nodeUrl,
@@ -184,10 +188,15 @@ function getAssetResourceUrl(asset: ResourceOwnerAsset): string | undefined {
     description.resource_uri,
     description.resourceUrl,
     description.resourceUri,
-    asset._id,
+    description.name,
   ];
 
   return candidates.find(isAbsoluteHttpUrl);
+}
+
+function getAssetName(asset: ResourceOwnerAsset): string | undefined {
+  const name = asset.description?.name?.trim();
+  return name || undefined;
 }
 
 function isAbsoluteHttpUrl(value: unknown): value is string {

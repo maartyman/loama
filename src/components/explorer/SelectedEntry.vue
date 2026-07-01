@@ -14,9 +14,6 @@
                     <LoButton :left-icon="PhGlobe" :disabled="isMakingPublic" @click="makeSelectedEntryPublic">
                         Make public
                     </LoButton>
-                    <LoButton :left-icon="PhEye" @click="watchSelectedResource">
-                        Watch resource
-                    </LoButton>
                 </div>
             </div>
             <div class="access-request-switch">
@@ -43,7 +40,7 @@
 <script setup lang="ts">
 import { usePodStore } from '@/lib/state';
 import ExplorerEntity from './ExplorerEntity.vue';
-import { PhEye, PhGlobe, PhPencil, PhXCircle } from '@phosphor-icons/vue';
+import { PhGlobe, PhPencil, PhXCircle } from '@phosphor-icons/vue';
 import LoButton from '../LoButton.vue';
 import { ref } from 'vue';
 import Drawer from 'primevue/drawer';
@@ -99,13 +96,6 @@ const makeSelectedEntryPublic = async () => {
     }
 }
 
-const watchSelectedResource = () => {
-    if (!podStore.selectedEntry) {
-        throw new Error('No entry selected, this should not be possible');
-    }
-
-    window.open(podStore.selectedEntry.resourceUrl, '_blank', 'noopener,noreferrer');
-}
 </script>
 
 <style scoped>
